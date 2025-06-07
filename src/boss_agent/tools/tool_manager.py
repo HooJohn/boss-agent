@@ -14,12 +14,10 @@ from boss_agent.tools.memory.simple_memory import SimpleMemoryTool
 from boss_agent.tools.slide_deck_tool import SlideDeckInitTool, SlideDeckCompleteTool
 from boss_agent.tools.web_search_tool import WebSearchTool
 from boss_agent.tools.visit_webpage_tool import VisitWebpageTool
-from boss_agent.tools.str_replace_tool_relative import StrReplaceEditorTool
 from boss_agent.tools.static_deploy_tool import StaticDeployTool
 from boss_agent.tools.sequential_thinking_tool import SequentialThinkingTool
 from boss_agent.tools.message_tool import MessageTool
 from boss_agent.tools.complete_tool import CompleteTool, ReturnControlToUserTool
-from boss_agent.tools.bash_tool import create_bash_tool, create_docker_bash_tool
 from boss_agent.browser.browser import Browser
 from boss_agent.utils import WorkspaceManager
 from boss_agent.llm.message_history import MessageHistory
@@ -69,15 +67,6 @@ def get_system_tools(
     Returns:
         list[LLMTool]: A list of all system tools.
     """
-    if container_id is not None:
-        bash_tool = create_docker_bash_tool(
-            container=container_id, ask_user_permission=ask_user_permission
-        )
-    else:
-        bash_tool = create_bash_tool(
-            ask_user_permission=ask_user_permission, cwd=workspace_manager.root
-        )
-
     logger = logging.getLogger("presentation_context_manager")
     context_manager = LLMSummarizingContextManager(
         client=client,
@@ -91,10 +80,6 @@ def get_system_tools(
         WebSearchTool(),
         VisitWebpageTool(),
         StaticDeployTool(workspace_manager=workspace_manager),
-        StrReplaceEditorTool(
-            workspace_manager=workspace_manager, message_queue=message_queue
-        ),
-        bash_tool,
         ListHtmlLinksTool(workspace_manager=workspace_manager),
         SlideDeckInitTool(
             workspace_manager=workspace_manager,

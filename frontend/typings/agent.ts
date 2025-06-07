@@ -1,7 +1,5 @@
 export enum TAB {
   BROWSER = "browser",
-  CODE = "code",
-  TERMINAL = "terminal",
 }
 
 export const AVAILABLE_MODELS = [
@@ -45,13 +43,11 @@ export enum AgentEvent {
 export enum TOOL {
   SEQUENTIAL_THINKING = "sequential_thinking",
   MESSAGE_USER = "message_user",
-  STR_REPLACE_EDITOR = "str_replace_editor",
   BROWSER_USE = "browser_use",
   PRESENTATION = "presentation",
   WEB_SEARCH = "web_search",
   IMAGE_SEARCH = "image_search",
   VISIT = "visit_webpage",
-  BASH = "bash",
   COMPLETE = "complete",
   STATIC_DEPLOY = "static_deploy",
   PDF_TEXT_EXTRACT = "pdf_text_extract",

@@ -3,9 +3,7 @@
 import { Terminal as XTerm } from "@xterm/xterm";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import {
-  Code,
   Globe,
-  Terminal as TerminalIcon,
   X,
   Share,
   Loader2,
@@ -26,17 +24,12 @@ import { useAppContext } from "@/context/app-context";
 import SidebarButton from "@/components/sidebar-button";
 import ConnectionStatus from "@/components/connection-status";
 import Browser from "@/components/browser";
-import CodeEditor from "@/components/code-editor";
 import QuestionInput from "@/components/question-input";
 import SearchBrowser from "@/components/search-browser";
 import { Button } from "@/components/ui/button";
 import ChatMessage from "@/components/chat-message";
 import ImageBrowser from "@/components/image-browser";
 import { Message, TAB, TOOL } from "@/typings/agent";
-
-const Terminal = dynamic(() => import("@/components/terminal"), {
-  ssr: false,
-});
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -384,52 +377,7 @@ export default function HomeContent() {
                       >
                         <Globe className="size-4" /> Browser
                       </Button>
-                      <Button
-                        className={`cursor-pointer hover:!bg-black ${
-                          state.activeTab === TAB.CODE
-                            ? "bg-gradient-skyblue-lavender !text-black"
-                            : ""
-                        }`}
-                        variant="outline"
-                        onClick={() =>
-                          dispatch({
-                            type: "SET_ACTIVE_TAB",
-                            payload: TAB.CODE,
-                          })
-                        }
-                      >
-                        <Code className="size-4" /> Code
-                      </Button>
-                      <Button
-                        className={`cursor-pointer hover:!bg-black ${
-                          state.activeTab === TAB.TERMINAL
-                            ? "bg-gradient-skyblue-lavender !text-black"
-                            : ""
-                        }`}
-                        variant="outline"
-                        onClick={() =>
-                          dispatch({
-                            type: "SET_ACTIVE_TAB",
-                            payload: TAB.TERMINAL,
-                          })
-                        }
-                      >
-                        <TerminalIcon className="size-4" /> Terminal
-                      </Button>
                     </div>
-                    <Button
-                      className="cursor-pointer"
-                      variant="outline"
-                      onClick={handleOpenVSCode}
-                    >
-                      <Image
-                        src={"/vscode.png"}
-                        alt="VS Code"
-                        width={20}
-                        height={20}
-                      />{" "}
-                      Open with VS Code
-                    </Button>
                   </div>
                   <Browser
                     className={
@@ -499,25 +447,6 @@ export default function HomeContent() {
                             ),
                           ]
                     }
-                  />
-                  <CodeEditor
-                    currentActionData={state.currentActionData}
-                    activeTab={state.activeTab}
-                    className={state.activeTab === TAB.CODE ? "" : "hidden"}
-                    workspaceInfo={state.workspaceInfo}
-                    activeFile={state.activeFileCodeEditor}
-                    setActiveFile={(file) =>
-                      dispatch({
-                        type: "SET_ACTIVE_FILE",
-                        payload: file,
-                      })
-                    }
-                    filesContent={state.filesContent}
-                    isReplayMode={isReplayMode}
-                  />
-                  <Terminal
-                    ref={xtermRef}
-                    className={state.activeTab === TAB.TERMINAL ? "" : "hidden"}
                   />
                 </div>
               </motion.div>
