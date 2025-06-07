@@ -1,6 +1,8 @@
 UPLOAD_FOLDER_NAME = "uploaded_files"
 COMPLETE_MESSAGE = "Completed the task."
-DEFAULT_MODEL = "claude-sonnet-4@20250514"
+
+# 优先使用Gemini模型
+DEFAULT_MODEL = "gemini-1.5-pro-latest"
 
 TOKEN_BUDGET = 120_000
 SUMMARY_MAX_TOKENS = 4000

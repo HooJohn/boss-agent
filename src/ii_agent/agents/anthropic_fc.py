@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os  # 添加os模块导入
 from typing import Any, Optional
 import uuid
 
@@ -14,8 +15,9 @@ from ii_agent.tools.base import ToolImplOutput, LLMTool
 from ii_agent.tools.utils import encode_image
 from ii_agent.db.manager import DatabaseManager
 from ii_agent.tools import AgentToolManager
-from ii_agent.utils.constants import COMPLETE_MESSAGE
+from ii_agent.utils.constants import COMPLETE_MESSAGE, DEFAULT_MODEL
 from ii_agent.utils.workspace_manager import WorkspaceManager
+from ii_agent.llm.gemini import GeminiDirectClient  # 添加Gemini客户端导入
 
 TOOL_RESULT_INTERRUPT_MESSAGE = "Tool execution interrupted by user."
 AGENT_INTERRUPT_MESSAGE = "Agent interrupted by user."
@@ -61,6 +63,7 @@ try breaking down the task into smaller steps. After call this tool to update or
         websocket: Optional[WebSocket] = None,
         session_id: Optional[uuid.UUID] = None,
         interactive_mode: bool = True,
+        use_gemini: bool = True,  # 添加Gemini使用标志
     ):
         """Initialize the agent.
 
@@ -79,7 +82,13 @@ try breaking down the task into smaller steps. After call this tool to update or
         super().__init__()
         self.workspace_manager = workspace_manager
         self.system_prompt = system_prompt
-        self.client = client
+        
+        # 使用Gemini客户端替代
+        if use_gemini and os.getenv("GEMINI_API_KEY"):
+            self.client = GeminiDirectClient(model_name=DEFAULT_MODEL)  # 添加必要的模型名称参数
+        else:
+            self.client = client
+            
         self.tool_manager = AgentToolManager(
             tools=tools,
             logger_for_agent_logs=logger_for_agent_logs,
@@ -221,12 +230,18 @@ try breaking down the task into smaller steps. After call this tool to update or
                 f"(Current token count: {self.history.count_tokens()})\n"
             )
 
-            model_response, _ = self.client.generate(
+            # 确保返回类型正确
+            response = self.client.generate(
                 messages=self.history.get_messages_for_llm(),
                 max_tokens=self.max_output_tokens,
                 tools=all_tool_params,
                 system_prompt=self.system_prompt,
             )
+            # 适配Gemini和Anthropic的返回格式差异
+            if isinstance(response, tuple):
+                model_response, _ = response
+            else:
+                model_response = response
 
             if len(model_response) == 0:
                 model_response = [TextResult(text=COMPLETE_MESSAGE)]
