@@ -59,6 +59,12 @@ class DatabaseManager:
 
         # Create session in database
         with self.get_session() as session:
+            existing_session = (
+                session.query(Session).filter(Session.id == str(session_uuid)).first()
+            )
+            if existing_session:
+                return session_uuid, workspace_path
+
             db_session = Session(
                 id=session_uuid, workspace_dir=str(workspace_path), device_id=device_id
             )

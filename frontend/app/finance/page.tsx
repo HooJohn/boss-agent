@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useWebSocket } from "@/hooks/use-websocket";
-import { useDeviceId } from "@/hooks/use-device-id";
+import { useAppContext } from "@/context/app-context";
 import { Printer, FileDown } from "lucide-react";
 import Markdown from "@/components/markdown";
 
@@ -14,16 +13,10 @@ const FinancePage = () => {
   const [timeDimension, setTimeDimension] = useState("");
   const [report, setReport] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { deviceId } = useDeviceId();
-
-  const handleEvent = (event: any) => {
-    if (event.type === "tool_result" && event.content.tool_name === "generate_report") {
-      setReport(event.content.result);
-      setIsLoading(false);
-    }
-  };
-
-  const { socket, sendMessage } = useWebSocket(deviceId, false, handleEvent);
+  const {
+    state: { socket },
+    sendMessage,
+  } = useAppContext();
 
   useEffect(() => {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -31,7 +24,9 @@ const FinancePage = () => {
         type: "init_agent",
         content: {
           model_name: "claude-3-7-sonnet@20250219",
-          tool_args: {},
+          tool_args: {
+            thinking_tokens: false,
+          },
         },
       });
     }

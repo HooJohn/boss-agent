@@ -79,13 +79,15 @@ global_args = None
 
 def map_model_name_to_client(model_name: str, ws_content: Dict[str, Any]) -> LLMClient:
     if "claude" in model_name:
+        tool_args = ws_content.get("tool_args", {})
+        thinking_tokens = tool_args.get("thinking_tokens", False)
         return get_client(
             "anthropic-direct",
             model_name=model_name,
             use_caching=False,
             project_id=global_args.project_id,
             region=global_args.region,
-            thinking_tokens=ws_content['tool_args']['thinking_tokens'],
+            thinking_tokens=thinking_tokens,
         )
     elif "gemini" in model_name:
         return get_client(
@@ -119,6 +121,8 @@ async def websocket_endpoint(websocket: WebSocket):
     )
     print(f"Workspace manager created for knowledge base: {workspace_manager}")
 
+    session_initialized = False
+
     try:
         await websocket.send_json(
             RealtimeEvent(
@@ -138,12 +142,15 @@ async def websocket_endpoint(websocket: WebSocket):
                 content = message.get("content", {})
 
                 if msg_type == "init_agent":
+                    if session_initialized:
+                        continue
                     model_name = content.get("model_name", DEFAULT_MODEL)
                     client = map_model_name_to_client(model_name, content)
                     tool_args = content.get("tool_args", {})
                     agent = create_agent_for_connection(
                         client, session_uuid, workspace_manager, websocket, tool_args
                     )
+                    session_initialized = True
                     active_agents[websocket] = agent
                     message_processor = agent.start_message_processing()
                     message_processors[websocket] = message_processor

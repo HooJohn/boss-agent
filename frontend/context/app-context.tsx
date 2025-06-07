@@ -31,6 +31,8 @@ interface AppState {
   toolSettings: ToolSettings;
   selectedModel?: string;
   wsConnectionState: WebSocketConnectionState;
+  socket: WebSocket | null;
+  sendMessage: (payload: { type: string; content: any }) => void;
 }
 
 // Define action types
@@ -91,15 +93,19 @@ const initialState: AppState = {
   },
   wsConnectionState: WebSocketConnectionState.CONNECTING,
   selectedModel: AVAILABLE_MODELS[0],
+  socket: null,
+  sendMessage: () => {},
 };
 
 // Create the context
 const AppContext = createContext<{
   state: AppState;
   dispatch: React.Dispatch<AppAction>;
+  sendMessage: (payload: { type: string; content: any }) => void;
 }>({
   state: initialState,
   dispatch: () => null,
+  sendMessage: () => {},
 });
 
 // Reducer function
@@ -168,15 +174,28 @@ function appReducer(state: AppState, action: AppAction): AppState {
   }
 }
 
+import { useWebSocket } from "@/hooks/use-websocket";
+import { useDeviceId } from "@/hooks/use-device-id";
+
 // Context provider component
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const { deviceId } = useDeviceId();
 
-  return (
-    <AppContext.Provider value={{ state, dispatch }}>
-      {children}
-    </AppContext.Provider>
-  );
+  const handleEvent = (event: any) => {
+    // This is a placeholder. The actual event handling will be done
+    // in the components that use the context.
+  };
+
+  const { socket, sendMessage } = useWebSocket(deviceId, false, handleEvent);
+
+  const value = {
+    state: { ...state, socket, sendMessage },
+    dispatch,
+    sendMessage,
+  };
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
 // Custom hook to use the context
