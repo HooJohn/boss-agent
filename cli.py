@@ -14,20 +14,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from ii_agent.core.event import RealtimeEvent, EventType
-from ii_agent.utils.constants import TOKEN_BUDGET
+from boss_agent.core.event import RealtimeEvent, EventType
+from boss_agent.utils.constants import TOKEN_BUDGET
 from utils import parse_common_args, create_workspace_manager_for_connection
 from rich.console import Console
 from rich.panel import Panel
 
-from ii_agent.tools import get_system_tools
-from ii_agent.prompts.system_prompt import SYSTEM_PROMPT
-from ii_agent.agents.anthropic_fc import AnthropicFC
-from ii_agent.utils import WorkspaceManager
-from ii_agent.llm import get_client
-from ii_agent.llm.context_manager.llm_summarizing import LLMSummarizingContextManager
-from ii_agent.llm.token_counter import TokenCounter
-from ii_agent.db.manager import DatabaseManager
+from boss_agent.tools import get_system_tools
+from boss_agent.prompts.system_prompt import SYSTEM_PROMPT
+from boss_agent.agents.anthropic_fc import AnthropicFC
+from boss_agent.utils import WorkspaceManager
+from boss_agent.llm import get_client
+from boss_agent.llm.context_manager.llm_summarizing import LLMSummarizingContextManager
+from boss_agent.llm.token_counter import TokenCounter
+from boss_agent.db.manager import DatabaseManager
 
 MAX_OUTPUT_TOKENS_PER_TURN = 32768
 MAX_TURNS = 200

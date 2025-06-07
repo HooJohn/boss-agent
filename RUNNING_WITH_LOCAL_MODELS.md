@@ -1,6 +1,6 @@
 # How to Run II-Agent with a Local LLM using LMStudio
 
-This guide explains how to configure and run `ii-agent` with a large language model (LLM) hosted locally using LMStudio. LMStudio provides an OpenAI-compatible API endpoint, allowing `ii-agent` to interact with a variety of local models.
+This guide explains how to configure and run `boss-agent` with a large language model (LLM) hosted locally using LMStudio. LMStudio provides an OpenAI-compatible API endpoint, allowing `boss-agent` to interact with a variety of local models.
 
 ## Prerequisites
 
@@ -15,25 +15,25 @@ This guide explains how to configure and run `ii-agent` with a large language mo
 4.  **Start the Local Server:**
     *   Navigate to the "Local Server" tab (usually looks like `<->`).
     *   Select your loaded model at the top.
-    *   **Important:** Under "Server Settings" or a similar section, ensure you enable **"Serve on Local Network"** or an equivalent option (e.g., by selecting your network IP instead of `localhost` or `127.0.0.1` in the "Server Host" dropdown). This is crucial if you are running `ii-agent` in a different environment (like WSL on Windows) than where LMStudio is graphically running (Windows itself). LMStudio will display the IP address and port it's using (e.g., `http://192.168.1.100:1234`). Note this down.
+    *   **Important:** Under "Server Settings" or a similar section, ensure you enable **"Serve on Local Network"** or an equivalent option (e.g., by selecting your network IP instead of `localhost` or `127.0.0.1` in the "Server Host" dropdown). This is crucial if you are running `boss-agent` in a different environment (like WSL on Windows) than where LMStudio is graphically running (Windows itself). LMStudio will display the IP address and port it's using (e.g., `http://192.168.1.100:1234`). Note this down.
     *   Click "Start Server".
 
 ## Step 2: Set Environment Variables for II-Agent
 
-Before running `ii-agent`, you need to configure two environment variables:
+Before running `boss-agent`, you need to configure two environment variables:
 
-*   `OPENAI_BASE_URL`: This tells `ii-agent` where to find your LMStudio API. Set it to the full URL provided by LMStudio in the previous step, including the `/v1` path for the OpenAI-compatible endpoint.
+*   `OPENAI_BASE_URL`: This tells `boss-agent` where to find your LMStudio API. Set it to the full URL provided by LMStudio in the previous step, including the `/v1` path for the OpenAI-compatible endpoint.
     *   Example: `export OPENAI_BASE_URL="http://100.110.67.102:1234/v1"`
-*   `OPENAI_API_KEY`: The OpenAI client library used by `ii-agent` expects an API key. LMStudio typically doesn't require one by default. You can set this to any non-empty string.
+*   `OPENAI_API_KEY`: The OpenAI client library used by `boss-agent` expects an API key. LMStudio typically doesn't require one by default. You can set this to any non-empty string.
     *   Example: `export OPENAI_API_KEY="lmstudio"`
 
 You can set these in your shell session or add them to your shell's configuration file (e.g., `.bashrc`, `.zshrc`).
 
 ## Step 3: Run II-Agent
 
-Now you can run `ii-agent` (either `cli.py` or `ws_server.py`) with specific command-line arguments to use your local model:
+Now you can run `boss-agent` (either `cli.py` or `ws_server.py`) with specific command-line arguments to use your local model:
 
-*   `--llm-client openai-direct`: This flag tells `ii-agent` to use the OpenAI-compatible client.
+*   `--llm-client openai-direct`: This flag tells `boss-agent` to use the OpenAI-compatible client.
 *   `--model-name <your-model-identifier>`: Specify the model identifier. For LMStudio, this is often the model file name or path as shown in the LMStudio server UI (e.g., `deepseek-ai/deepseek-coder-6.7b-instruct`). Consult your LMStudio server tab for the exact identifier it expects or serves.
 
 ### Example Commands:
@@ -69,10 +69,10 @@ Replace `<your-lmstudio-ip>:<port>` and `<your-model-identifier-in-lmstudio>` wi
 
 *   **Connection Errors:**
     *   Double-check the `OPENAI_BASE_URL`. Ensure it matches the IP and port LMStudio is serving on, including the `/v1` suffix.
-    *   Verify that LMStudio is serving on your local network IP, not just `localhost`, if `ii-agent` is running in a container or WSL.
+    *   Verify that LMStudio is serving on your local network IP, not just `localhost`, if `boss-agent` is running in a container or WSL.
     *   Check your firewall settings to ensure connections to the LMStudio port are allowed.
 *   **Model Not Found / Incorrect Model:**
     *   Ensure the `--model-name` matches the identifier LMStudio expects. This is often displayed in the LMStudio server log or UI when you select a model to serve.
 *   **LMStudio Logs:** Check the LMStudio server logs for any error messages or information about incoming requests.
 
-By following these steps, you can leverage the power of local LLMs with `ii-agent` for development, testing, or offline use. 
+By following these steps, you can leverage the power of local LLMs with `boss-agent` for development, testing, or offline use. 

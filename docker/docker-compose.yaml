@@ -3,7 +3,7 @@ services:
     build:
       context: ..
       dockerfile: docker/frontend/Dockerfile
-    image: frontend
+    image: boss-agent-frontend
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     volumes:
@@ -13,7 +13,7 @@ services:
     build:
       context: ..
       dockerfile: docker/backend/Dockerfile
-    image: backend
+    image: boss-agent-backend
     init: true
     ports:
       - "${BACKEND_PORT:-8000}:8000"

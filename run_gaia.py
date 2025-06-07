@@ -21,12 +21,12 @@ from datasets import load_dataset, Dataset
 from huggingface_hub import snapshot_download
 import uuid
 import asyncio
-from ii_agent.db.models import Session, Event
-from ii_agent.agents.anthropic_fc import AnthropicFC
-from ii_agent.browser.browser import Browser
-from ii_agent.prompts.gaia_system_prompt import GAIA_SYSTEM_PROMPT
-from ii_agent.tools.bash_tool import BashTool
-from ii_agent.tools.browser_tools import (
+from boss_agent.db.models import Session, Event
+from boss_agent.agents.anthropic_fc import AnthropicFC
+from boss_agent.browser.browser import Browser
+from boss_agent.prompts.gaia_system_prompt import GAIA_SYSTEM_PROMPT
+from boss_agent.tools.bash_tool import BashTool
+from boss_agent.tools.browser_tools import (
     BrowserClickTool,
     BrowserEnterTextTool,
     BrowserGetSelectOptionsTool,
@@ -39,26 +39,26 @@ from ii_agent.tools.browser_tools import (
     BrowserViewTool,
     BrowserWaitTool,
 )
-from ii_agent.tools.advanced_tools.gemini import (
+from boss_agent.tools.advanced_tools.gemini import (
     AudioUnderstandingTool,
     AudioTranscribeTool,
     YoutubeVideoUnderstandingTool,
 )
-from ii_agent.tools.sequential_thinking_tool import SequentialThinkingTool
-from ii_agent.tools.str_replace_tool_relative import StrReplaceEditorTool
-from ii_agent.tools.text_inspector_tool import TextInspectorTool
-from ii_agent.tools.visit_webpage_tool import VisitWebpageTool
-from ii_agent.tools.visualizer import DisplayImageTool
-from ii_agent.tools.web_search_tool import WebSearchTool
-from ii_agent.utils import WorkspaceManager
-from ii_agent.llm import get_client
-from ii_agent.llm.context_manager.llm_summarizing import LLMSummarizingContextManager
-from ii_agent.llm.token_counter import TokenCounter
-from ii_agent.utils.constants import DEFAULT_MODEL, TOKEN_BUDGET, UPLOAD_FOLDER_NAME
+from boss_agent.tools.sequential_thinking_tool import SequentialThinkingTool
+from boss_agent.tools.str_replace_tool_relative import StrReplaceEditorTool
+from boss_agent.tools.text_inspector_tool import TextInspectorTool
+from boss_agent.tools.visit_webpage_tool import VisitWebpageTool
+from boss_agent.tools.visualizer import DisplayImageTool
+from boss_agent.tools.web_search_tool import WebSearchTool
+from boss_agent.utils import WorkspaceManager
+from boss_agent.llm import get_client
+from boss_agent.llm.context_manager.llm_summarizing import LLMSummarizingContextManager
+from boss_agent.llm.token_counter import TokenCounter
+from boss_agent.utils.constants import DEFAULT_MODEL, TOKEN_BUDGET, UPLOAD_FOLDER_NAME
 from utils import parse_common_args
-from ii_agent.db.manager import DatabaseManager
-from ii_agent.core.event import RealtimeEvent, EventType
-from ii_agent.tools.youtube_transcript_tool import YoutubeTranscriptTool
+from boss_agent.db.manager import DatabaseManager
+from boss_agent.core.event import RealtimeEvent, EventType
+from boss_agent.tools.youtube_transcript_tool import YoutubeTranscriptTool
 
 # Global lock for thread-safe file appending
 append_answer_lock = Lock()

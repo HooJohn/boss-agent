@@ -1,21 +1,21 @@
 <div align="center">
-  <img src="assets/ii.png" width="200"/>
+  <img src="assets/boss.png" width="200"/>
 
 
 
 
-# II Agent
+# Boss Agent
 
-[![GitHub stars](https://img.shields.io/github/stars/Intelligent-Internet/ii-agent?style=social)](https://github.com/Intelligent-Internet/ii-agent/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/Intelligent-Internet/boss-agent?style=social)](https://github.com/Intelligent-Internet/boss-agent/stargazers)
 [![Discord Follow](https://dcbadge.vercel.app/api/server/yDWPsshPHB?style=flat)](https://discord.gg/yDWPsshPHB)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Blog](https://img.shields.io/badge/Blog-II--Agent-blue)](https://ii.inc/web/blog/post/ii-agent)
-[![GAIA Benchmark](https://img.shields.io/badge/GAIA-Benchmark-green)](https://ii-agent-gaia.ii.inc/)
-[<img src="https://devin.ai/assets/deepwiki-badge.png" alt="Ask DeepWiki.com" height="20"/>](https://deepwiki.com/Intelligent-Internet/ii-agent)
+[![Blog](https://img.shields.io/badge/Blog-Boss--Agent-blue)](https://boss-agent.com/web/blog/post/boss-agent)
+[![GAIA Benchmark](https://img.shields.io/badge/GAIA-Benchmark-green)](https://boss-agent-gaia.boss-agent.com/)
+[<img src="https://devin.ai/assets/deepwiki-badge.png" alt="Ask DeepWiki.com" height="20"/>](https://deepwiki.com/Intelligent-Internet/boss-agent)
 
 </div>
 
-II-Agent is an open-source intelligent assistant designed to streamline and enhance workflows across multiple domains. It represents a significant advancement in how we interact with technology—shifting from passive tools to intelligent systems capable of independently executing complex tasks.
+Boss-Agent is an open-source intelligent assistant designed to streamline and enhance workflows across multiple domains. It represents a significant advancement in how we interact with technology—shifting from passive tools to intelligent systems capable of independently executing complex tasks.
 
 ### Discord Join US
 
@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/d0eb7440-a6e2-4276-865c-a1055181bb33
 
 ## Overview
 
-II Agent is built around providing an agentic interface to leading language models. It offers:
+Boss Agent is built around providing an agentic interface to leading language models. It offers:
 
 - A CLI interface for direct command-line interaction
 - A WebSocket server that powers a modern React-based frontend
@@ -38,9 +38,9 @@ II Agent is built around providing an agentic interface to leading language mode
 
 ## Core Capabilities
 
-II-Agent is a versatile open-source assistant built to elevate your productivity across domains:
+Boss-Agent is a versatile open-source assistant built to elevate your productivity across domains:
 
-| Domain | What II‑Agent Can Do |
+| Domain | What Boss‑Agent Can Do |
 |--------|----------------------|
 | Research & Fact‑Checking | Multistep web search, source triangulation, structured note‑taking, rapid summarization |
 | Content Generation | Blog & article drafts, lesson plans, creative prose, technical manuals, Website creations |
@@ -51,7 +51,7 @@ II-Agent is a versatile open-source assistant built to elevate your productivity
 
 ## Methods
 
-The II-Agent system represents a sophisticated approach to building versatile AI agents. Our methodology centers on:
+The Boss-Agent system represents a sophisticated approach to building versatile AI agents. Our methodology centers on:
 
 1. **Core Agent Architecture and LLM Interaction**
    - System prompting with dynamically tailored context
@@ -86,7 +86,7 @@ The II-Agent system represents a sophisticated approach to building versatile AI
 
 ## GAIA Benchmark Evaluation
 
-II-Agent has been evaluated on the GAIA benchmark, which assesses LLM-based agents operating within realistic scenarios across multiple dimensions including multimodal processing, tool utilization, and web searching.
+Boss-Agent has been evaluated on the GAIA benchmark, which assesses LLM-based agents operating within realistic scenarios across multiple dimensions including multimodal processing, tool utilization, and web searching.
 
 We identified several issues with the GAIA benchmark during our evaluation:
 
@@ -94,10 +94,10 @@ We identified several issues with the GAIA benchmark during our evaluation:
 - **Outdated Information**: Some questions reference websites or content no longer accessible
 - **Language Ambiguity**: Unclear phrasing leading to different interpretations of questions
 
-Despite these challenges, II-Agent demonstrated strong performance on the benchmark, particularly in areas requiring complex reasoning, tool use, and multi-step planning.
+Despite these challenges, Boss-Agent demonstrated strong performance on the benchmark, particularly in areas requiring complex reasoning, tool use, and multi-step planning.
 
 ![GAIA Benchmark](assets/gaia.jpg)
-You can view the full traces of some samples here: [GAIA Benchmark Traces](https://ii-agent-gaia.ii.inc/)
+You can view the full traces of some samples here: [GAIA Benchmark Traces](https://boss-agent-gaia.boss-agent.com/)
 
 ## Requirements
 - Docker Compose
@@ -255,7 +255,7 @@ npm run dev
 
 - `cli.py`: Command-line interface
 - `ws_server.py`: WebSocket server for the frontend
-- `src/ii_agent/`: Core agent implementation
+- `src/boss_agent/`: Core agent implementation
   - `agents/`: Agent implementations
   - `llm/`: LLM client interfaces
   - `tools/`: Tool implementations
@@ -263,7 +263,7 @@ npm run dev
 
 ## Conclusion
 
-The II-Agent framework, architected around the reasoning capabilities of large language models like Claude 4.0 Sonnet or Gemini 2.5 Pro, presents a comprehensive and robust methodology for building versatile AI agents. Through its synergistic combination of a powerful LLM, a rich set of execution capabilities, an explicit mechanism for planning and reflection, and intelligent context management strategies, II-Agent is well-equipped to address a wide spectrum of complex, multi-step tasks. Its open-source nature and extensible design provide a strong foundation for continued research and development in the rapidly evolving field of agentic AI.
+The Boss-Agent framework, architected around the reasoning capabilities of large language models like Claude 4.0 Sonnet or Gemini 2.5 Pro, presents a comprehensive and robust methodology for building versatile AI agents. Through its synergistic combination of a powerful LLM, a rich set of execution capabilities, an explicit mechanism for planning and reflection, and intelligent context management strategies, Boss-Agent is well-equipped to address a wide spectrum of complex, multi-step tasks. Its open-source nature and extensible design provide a strong foundation for continued research and development in the rapidly evolving field of agentic AI.
 
 ## Acknowledgement
 
@@ -276,4 +276,3 @@ We would like to express our sincere gratitude to the following projects and ind
 - **Index Browser Use**: We have built upon and extended the functionality of the [Index Browser Use project](https://github.com/lmnr-ai/index/tree/main), particularly in our web interaction and browsing capabilities. Their foundational work has enabled us to create more sophisticated web-based agent behaviors.
 
 We are committed to open source collaboration and believe in acknowledging the work that has helped us build this project. If you feel your work has been used in this project but hasn't been properly acknowledged, please reach out to us.
-

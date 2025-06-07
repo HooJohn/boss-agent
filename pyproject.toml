@@ -1,10 +1,10 @@
 [project]
-name = "ii-agent"
+name = "boss-agent"
 version = "0.1.0"
 description = "Intelligent Agent platform providing CLI and WebSocket interfaces"
 readme = "README.md"
 authors = [
-    { name = "Intelligent Internet", email = "info@ii.inc" }
+    { name = "Intelligent Internet", email = "info@boss-agent.com" }
 ]
 requires-python = ">=3.10"
 dependencies = [

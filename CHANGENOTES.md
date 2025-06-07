@@ -1,6 +1,6 @@
 # Change Notes: LMStudio and Local Model Support
 
-This document outlines the changes made to the `ii-agent` codebase to enable support for local large language models (LLMs) served via LMStudio, which exposes an OpenAI-compatible API endpoint. These changes allow users to leverage models like DeepSeek alongside the existing Anthropic API functionality.
+This document outlines the changes made to the `boss-agent` codebase to enable support for local large language models (LLMs) served via LMStudio, which exposes an OpenAI-compatible API endpoint. These changes allow users to leverage models like DeepSeek alongside the existing Anthropic API functionality.
 
 ## Key Feature: Local LLM Support via LMStudio
 
@@ -14,11 +14,11 @@ The primary goal of these modifications is to allow users to specify an "openai-
     *   Added `--llm-client`: Allows users to choose between "anthropic-direct" (default) and "openai-direct".
     *   Added `--model-name`: Allows users to specify the model name to be used (e.g., "deepseek-coder", "claude-3-opus-20240229").
 *   **Dynamic Client Initialization (`cli.py`, `ws_server.py`):**
-    *   The `get_client` function in `src/ii_agent/llm/__init__.py` is now used to dynamically instantiate either `AnthropicDirectClient` or `OpenAIDirectClient` based on the `--llm-client` argument.
+    *   The `get_client` function in `src/boss_agent/llm/__init__.py` is now used to dynamically instantiate either `AnthropicDirectClient` or `OpenAIDirectClient` based on the `--llm-client` argument.
 *   **Conditional Argument Passing (`cli.py`, `ws_server.py`):**
     *   Modified `cli.py` and `ws_server.py` to conditionally pass client-specific keyword arguments to `get_client`. For example, Anthropic-specific parameters (`use_caching`, `project_id`, `region`, `thinking_tokens`) are only passed if `--llm-client` is "anthropic-direct". This prevents `TypeError`s when using `OpenAIDirectClient`.
 
-### 2. `OpenAIDirectClient` Refinements (`src/ii_agent/llm/openai.py`)
+### 2. `OpenAIDirectClient` Refinements (`src/boss_agent/llm/openai.py`)
 
 The `OpenAIDirectClient` was enhanced to ensure compatibility and robustness when interacting with OpenAI-compatible APIs, particularly LMStudio serving models like DeepSeek.
 
@@ -38,7 +38,7 @@ The `OpenAIDirectClient` was enhanced to ensure compatibility and robustness whe
 *   **Logging Initialization:**
     *   Added `import logging` and `logger = logging.getLogger(__name__)` at the beginning of the file to resolve `NameError` for the logger.
 
-### 3. `LLMClient` Interface (`src/ii_agent/llm/__init__.py`)
+### 3. `LLMClient` Interface (`src/boss_agent/llm/__init__.py`)
 
 *   The `get_client` function was updated to accept `llm_client_name` and `model_name` as arguments to facilitate the dynamic selection and configuration of the appropriate LLM client.
 
@@ -54,11 +54,11 @@ These changes are designed to be additive. The existing Anthropic functionality 
 1.  **Start LMStudio:**
     *   Download and run LMStudio.
     *   Load your desired model (e.g., a DeepSeek Coder variant).
-    *   Start the server in LMStudio. **Crucially, ensure you select "Serve on Local Network" in the LMStudio server settings if running `ii-agent` in a different environment (like WSL) than where LMStudio is hosted (e.g., Windows).** Note the IP address and port provided by LMStudio.
+    *   Start the server in LMStudio. **Crucially, ensure you select "Serve on Local Network" in the LMStudio server settings if running `boss-agent` in a different environment (like WSL) than where LMStudio is hosted (e.g., Windows).** Note the IP address and port provided by LMStudio.
 2.  **Set Environment Variables:**
     *   `OPENAI_BASE_URL`: Set this to the address of your LMStudio server (e.g., `export OPENAI_BASE_URL="http://100.110.67.102:1234/v1"`). Replace the IP and port with your LMStudio server details.
     *   `OPENAI_API_KEY`: Set this to any non-empty string (e.g., `export OPENAI_API_KEY="lmstudio"`). LMStudio typically does not require an API key by default.
-3.  **Run `ii-agent`:**
+3.  **Run `boss-agent`:**
     *   Use the `--llm-client openai-direct` argument.
     *   Specify the model using `--model-name <your-model-identifier-in-lmstudio>` (e.g., `--model-name deepseek-ai/deepseek-coder-6.7b-instruct`). The exact model name might depend on how LMStudio identifies it; often, it's the path/name shown in the LMStudio UI.
 

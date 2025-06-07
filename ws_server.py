@@ -33,24 +33,24 @@ import anyio
 import base64
 from sqlalchemy import asc, text
 
-from ii_agent.core.event import RealtimeEvent, EventType
-from ii_agent.db.models import Event
-from ii_agent.utils.constants import DEFAULT_MODEL, TOKEN_BUDGET, UPLOAD_FOLDER_NAME
+from boss_agent.core.event import RealtimeEvent, EventType
+from boss_agent.db.models import Event
+from boss_agent.utils.constants import DEFAULT_MODEL, TOKEN_BUDGET, UPLOAD_FOLDER_NAME
 from utils import parse_common_args, create_workspace_manager_for_connection
-from ii_agent.agents.anthropic_fc import AnthropicFC
-from ii_agent.agents.base import BaseAgent
-from ii_agent.llm.base import LLMClient
-from ii_agent.utils import WorkspaceManager
-from ii_agent.llm import get_client
-from ii_agent.utils.prompt_generator import enhance_user_prompt
+from boss_agent.agents.anthropic_fc import AnthropicFC
+from boss_agent.agents.base import BaseAgent
+from boss_agent.llm.base import LLMClient
+from boss_agent.utils import WorkspaceManager
+from boss_agent.llm import get_client
+from boss_agent.utils.prompt_generator import enhance_user_prompt
 
 from fastapi.staticfiles import StaticFiles
 
-from ii_agent.llm.context_manager.llm_summarizing import LLMSummarizingContextManager
-from ii_agent.llm.token_counter import TokenCounter
-from ii_agent.db.manager import DatabaseManager
-from ii_agent.tools import get_system_tools
-from ii_agent.prompts.system_prompt import SYSTEM_PROMPT, SYSTEM_PROMPT_WITH_SEQ_THINKING
+from boss_agent.llm.context_manager.llm_summarizing import LLMSummarizingContextManager
+from boss_agent.llm.token_counter import TokenCounter
+from boss_agent.db.manager import DatabaseManager
+from boss_agent.tools import get_system_tools
+from boss_agent.prompts.system_prompt import SYSTEM_PROMPT, SYSTEM_PROMPT_WITH_SEQ_THINKING
 
 MAX_OUTPUT_TOKENS_PER_TURN = 32000
 MAX_TURNS = 200

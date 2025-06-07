@@ -11,7 +11,7 @@ WORKDIR /app
 # Copy only the files needed for installation
 COPY pyproject.toml .
 COPY README.md .
-COPY src/ii_agent/ ./src/ii_agent/
+COPY src/boss_agent/ ./src/boss_agent/
 
 # Install dependencies into a virtual environment
 RUN python -m venv /venv
