@@ -314,7 +314,7 @@ try breaking down the task into smaller steps. After call this tool to update or
         }
         if orientation_instruction:
             tool_input["orientation_instruction"] = orientation_instruction
-        return self.run(tool_input, self.history, tool_choice)
+        return self.run(tool_input, self.history)
 
     def clear(self):
         """Clear the dialog and reset interruption state."""
