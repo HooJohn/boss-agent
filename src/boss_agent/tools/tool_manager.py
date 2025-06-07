@@ -6,12 +6,10 @@ from typing import Optional, List, Dict, Any
 from boss_agent.llm.base import LLMClient
 from boss_agent.llm.context_manager.llm_summarizing import LLMSummarizingContextManager
 from boss_agent.llm.token_counter import TokenCounter
-from boss_agent.tools.advanced_tools.image_search_tool import ImageSearchTool
 from boss_agent.tools.base import LLMTool
 from boss_agent.llm.message_history import ToolCallParameters
 from boss_agent.tools.memory.compactify_memory import CompactifyMemoryTool
 from boss_agent.tools.memory.simple_memory import SimpleMemoryTool
-from boss_agent.tools.slide_deck_tool import SlideDeckInitTool, SlideDeckCompleteTool
 from boss_agent.tools.web_search_tool import WebSearchTool
 from boss_agent.tools.visit_webpage_tool import VisitWebpageTool
 from boss_agent.tools.static_deploy_tool import StaticDeployTool
@@ -36,18 +34,6 @@ from boss_agent.tools.browser_tools import (
     BrowserGetSelectOptionsTool,
     BrowserSelectDropdownOptionTool,
 )
-from boss_agent.tools.visualizer import DisplayImageTool
-from boss_agent.tools.advanced_tools.audio_tool import (
-    AudioTranscribeTool,
-    AudioGenerateTool,
-)
-from boss_agent.tools.advanced_tools.video_gen_tool import (
-    VideoGenerateFromTextTool,
-    VideoGenerateFromImageTool,
-    LongVideoGenerateFromTextTool,
-    LongVideoGenerateFromImageTool,
-)
-from boss_agent.tools.advanced_tools.image_gen_tool import ImageGenerateTool
 from boss_agent.tools.advanced_tools.pdf_tool import PdfTextExtractTool
 from boss_agent.tools.deep_research_tool import DeepResearchTool
 from boss_agent.tools.list_html_links_tool import ListHtmlLinksTool
@@ -85,17 +71,7 @@ def get_system_tools(
         VisitWebpageTool(),
         StaticDeployTool(workspace_manager=workspace_manager),
         ListHtmlLinksTool(workspace_manager=workspace_manager),
-        SlideDeckInitTool(
-            workspace_manager=workspace_manager,
-        ),
-        SlideDeckCompleteTool(
-            workspace_manager=workspace_manager,
-        ),
-        DisplayImageTool(workspace_manager=workspace_manager),
     ]
-    image_search_tool = ImageSearchTool()
-    if image_search_tool.is_available():
-        tools.append(image_search_tool)
 
     # Conditionally add tools based on tool_args
     if tool_args:
@@ -105,29 +81,6 @@ def get_system_tools(
             tools.append(DeepResearchTool())
         if tool_args.get("pdf", False):
             tools.append(PdfTextExtractTool(workspace_manager=workspace_manager))
-        if tool_args.get("media_generation", False) and (
-            os.environ.get("MEDIA_GCP_PROJECT_ID")
-            and os.environ.get("MEDIA_GCP_LOCATION")
-        ):
-            tools.append(ImageGenerateTool(workspace_manager=workspace_manager))
-            if tool_args.get("video_generation", False):
-                tools.extend([
-                    VideoGenerateFromTextTool(workspace_manager=workspace_manager), 
-                    VideoGenerateFromImageTool(workspace_manager=workspace_manager),
-                    LongVideoGenerateFromTextTool(workspace_manager=workspace_manager),
-                    LongVideoGenerateFromImageTool(workspace_manager=workspace_manager)
-                ])
-        if tool_args.get("audio_generation", False) and (
-            os.environ.get("OPEN_API_KEY") and os.environ.get("AZURE_OPENAI_ENDPOINT")
-        ):
-            tools.extend(
-                [
-                    AudioTranscribeTool(workspace_manager=workspace_manager),
-                    AudioGenerateTool(workspace_manager=workspace_manager),
-                ]
-            )
-            
-        # Browser tools
         if tool_args.get("browser", False):
             browser = Browser()
             tools.extend(

@@ -86,8 +86,6 @@ const initialState: AppState = {
   toolSettings: {
     deep_research: false,
     pdf: true,
-    media_generation: true,
-    audio_generation: true,
     browser: true,
     thinking_tokens: 10000,
   },

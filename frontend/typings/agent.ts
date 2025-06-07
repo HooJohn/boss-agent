@@ -137,8 +137,6 @@ export interface IEvent {
 export interface ToolSettings {
   deep_research: boolean;
   pdf: boolean;
-  media_generation: boolean;
-  audio_generation: boolean;
   browser: boolean;
   thinking_tokens: number;
 }

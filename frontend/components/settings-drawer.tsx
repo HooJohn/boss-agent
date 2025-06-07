@@ -48,8 +48,6 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
       payload: {
         deep_research: false,
         pdf: true,
-        media_generation: true,
-        audio_generation: true,
         browser: true,
         thinking_tokens: 10000,
       },
@@ -247,47 +245,6 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="media-generation"
-                        className="text-gray-300"
-                      >
-                        媒体生成
-                      </Label>
-                      <p className="text-xs text-gray-400">
-                        生成图片和视频
-                      </p>
-                    </div>
-                    <Switch
-                      id="media-generation"
-                      checked={state.toolSettings.media_generation}
-                      onCheckedChange={() =>
-                        handleToolToggle("media_generation")
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="audio-generation"
-                        className="text-gray-300"
-                      >
-                        音频生成
-                      </Label>
-                      <p className="text-xs text-gray-400">
-                        生成和处理音频内容
-                      </p>
-                    </div>
-                    <Switch
-                      id="audio-generation"
-                      checked={state.toolSettings.audio_generation}
-                      onCheckedChange={() =>
-                        handleToolToggle("audio_generation")
-                      }
-                    />
-                  </div>
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
