@@ -53,9 +53,6 @@ from boss_agent.db.manager import DatabaseManager
 from boss_agent.tools import get_system_tools
 from boss_agent.prompts.system_prompt import SYSTEM_PROMPT, SYSTEM_PROMPT_WITH_SEQ_THINKING
 
-MAX_OUTPUT_TOKENS_PER_TURN = 32000
-MAX_TURNS = 200
-
 
 app = FastAPI(title="Agent WebSocket API")
 app.add_middleware(
@@ -148,7 +145,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     client = map_model_name_to_client(model_name, content)
                     tool_args = content.get("tool_args", {})
                     agent = create_agent_for_connection(
-                        client, session_uuid, workspace_manager, websocket, tool_args
+                        client, session_uuid, workspace_manager, websocket, tool_args, config
                     )
                     session_initialized = True
                     active_agents[websocket] = agent
@@ -279,6 +276,7 @@ def create_agent_for_connection(
     workspace_manager: WorkspaceManager,
     websocket: WebSocket,
     tool_args: Dict[str, Any],
+    config: configparser.ConfigParser,
     search_mode: str = "all",
 ):
     global global_args
@@ -324,6 +322,9 @@ def create_agent_for_connection(
     elif search_mode == "external":
         tools = [tool for tool in tools if tool.name != "internal_search"]
     
+    max_turns = config.getint('agent', 'max_turns', fallback=200)
+    max_output_tokens = config.getint('agent', 'max_output_tokens_per_turn', fallback=32000)
+
     agent = AnthropicFC(
         system_prompt=SYSTEM_PROMPT_WITH_SEQ_THINKING if tool_args.get("sequential_thinking", False) else SYSTEM_PROMPT,
         client=client,
@@ -332,8 +333,8 @@ def create_agent_for_connection(
         message_queue=queue,
         logger_for_agent_logs=logger_for_agent_logs,
         context_manager=context_manager,
-        max_output_tokens_per_turn=MAX_OUTPUT_TOKENS_PER_TURN,
-        max_turns=MAX_TURNS,
+        max_output_tokens_per_turn=max_output_tokens,
+        max_turns=max_turns,
         websocket=websocket,
         session_id=session_id,
     )

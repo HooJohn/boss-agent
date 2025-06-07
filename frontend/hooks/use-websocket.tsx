@@ -17,10 +17,10 @@ export function useWebSocket(
       content: Record<string, unknown>;
     },
     workspacePath?: string
-  ) => void
+  ) => void,
+  dispatch: React.Dispatch<any>
 ) {
   const [socket, setSocket] = useState<WebSocket | null>(null);
-  const { dispatch } = useAppContext();
 
   const connectWebSocket = () => {
     dispatch({

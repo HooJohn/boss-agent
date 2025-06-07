@@ -18,7 +18,6 @@ import { Orbitron } from "next/font/google";
 import { useSearchParams } from "next/navigation";
 
 import { useDeviceId } from "@/hooks/use-device-id";
-import { useWebSocket } from "@/hooks/use-websocket";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { useAppEvents } from "@/hooks/use-app-events";
 import { useAppContext } from "@/context/app-context";
@@ -44,8 +43,8 @@ export default function HomeContent() {
   const xtermRef = useRef<XTerm | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const { state, dispatch } = useAppContext();
-  const { handleEvent, handleClickAction } = useAppEvents({ xtermRef });
+  const { state, dispatch, sendMessage, handleEvent } = useAppContext();
+  const { handleClickAction } = useAppEvents({ xtermRef });
   const searchParams = useSearchParams();
 
   const { deviceId } = useDeviceId();
@@ -56,11 +55,13 @@ export default function HomeContent() {
       handleEvent,
     });
 
-  const { socket, sendMessage } = useWebSocket(
-    deviceId,
-    isReplayMode,
-    handleEvent
-  );
+  const { socket } = state;
+
+  useEffect(() => {
+    if (state.currentActionData) {
+      handleClickAction(state.currentActionData);
+    }
+  }, [state.currentActionData, handleClickAction]);
 
   useEffect(() => {
     if (autoScroll && messagesEndRef.current) {
