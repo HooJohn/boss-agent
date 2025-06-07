@@ -100,7 +100,7 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-white">Run settings</h2>
+            <h2 className="text-xl font-semibold text-white">运行设置</h2>
             <div className="flex items-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -113,7 +113,7 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                     <RotateCcw className="size-5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Reset Default Settings</TooltipContent>
+                <TooltipContent>重置默认设置</TooltipContent>
               </Tooltip>
               <Button
                 variant="ghost"
@@ -136,7 +136,7 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                 }
               >
                 <SelectTrigger className="w-full bg-[#35363a] border-[#ffffff0f]">
-                  <SelectValue placeholder="Select model" />
+                  <SelectValue placeholder="选择模型" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#35363a] border-[#ffffff0f]">
                   {AVAILABLE_MODELS.map((model) => (
@@ -156,7 +156,7 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                   onClick={() => setReasoningExpanded(!reasoningExpanded)}
                 >
                   <h3 className="text-lg font-medium text-white">
-                    Reasoning Effort
+                    推理强度
                   </h3>
                   <ChevronDown
                     className={`size-5 transition-transform ${
@@ -172,11 +172,10 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                         htmlFor="reasoning-effort"
                         className="text-gray-300"
                       >
-                        Effort Level
+                        强度等级
                       </Label>
                       <p className="text-xs text-gray-400 mb-2">
-                        Controls how much effort the model spends on reasoning
-                        before responding
+                        控制模型在响应前用于推理的强度
                       </p>
                       <Select
                         value={
@@ -187,11 +186,11 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                         onValueChange={handleReasoningEffortChange}
                       >
                         <SelectTrigger className="w-full bg-[#35363a] border-[#ffffff0f]">
-                          <SelectValue placeholder="Select effort level" />
+                          <SelectValue placeholder="选择强度等级" />
                         </SelectTrigger>
                         <SelectContent className="bg-[#35363a] border-[#ffffff0f]">
-                          <SelectItem value="standard">Standard</SelectItem>
-                          <SelectItem value="high">High-effort</SelectItem>
+                          <SelectItem value="standard">标准</SelectItem>
+                          <SelectItem value="high">高强度</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -206,7 +205,7 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                 className="flex justify-between items-center cursor-pointer"
                 onClick={() => setToolsExpanded(!toolsExpanded)}
               >
-                <h3 className="text-lg font-medium text-white">Tools</h3>
+                <h3 className="text-lg font-medium text-white">工具</h3>
                 <ChevronDown
                   className={`size-5 transition-transform ${
                     toolsExpanded ? "rotate-180" : ""
@@ -219,10 +218,10 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <Label htmlFor="deep-research" className="text-gray-300">
-                        Deep Research
+                        深度研究
                       </Label>
                       <p className="text-xs text-gray-400">
-                        Enable in-depth research capabilities
+                        启用深度研究能力
                       </p>
                     </div>
                     <Switch
@@ -235,10 +234,10 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <Label htmlFor="pdf" className="text-gray-300">
-                        PDF Processing
+                        PDF 处理
                       </Label>
                       <p className="text-xs text-gray-400">
-                        Extract and analyze PDF documents
+                        提取和分析 PDF 文档
                       </p>
                     </div>
                     <Switch
@@ -254,10 +253,10 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                         htmlFor="media-generation"
                         className="text-gray-300"
                       >
-                        Media Generation
+                        媒体生成
                       </Label>
                       <p className="text-xs text-gray-400">
-                        Generate images and videos
+                        生成图片和视频
                       </p>
                     </div>
                     <Switch
@@ -275,10 +274,10 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                         htmlFor="audio-generation"
                         className="text-gray-300"
                       >
-                        Audio Generation
+                        音频生成
                       </Label>
                       <p className="text-xs text-gray-400">
-                        Generate and process audio content
+                        生成和处理音频内容
                       </p>
                     </div>
                     <Switch
@@ -293,10 +292,10 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <Label htmlFor="browser" className="text-gray-300">
-                        Browser
+                        浏览器
                       </Label>
                       <p className="text-xs text-gray-400">
-                        Enable web browsing capabilities
+                        启用网页浏览功能
                       </p>
                     </div>
                     <Switch

@@ -113,6 +113,56 @@ You can view the full traces of some samples here: [GAIA Benchmark Traces](https
 - For fast and cheap, we recommend using GPT4.1 from OpenAI.
 - Gemini 2.5 Pro is a good balance between performance and cost.
 
+## Knowledge Base Setup (Important)
+
+Boss-Agent is designed to work with a structured "Knowledge Base" on your local file system. This allows it to securely access and reason about your company's internal data.
+
+### 1. Directory Structure
+
+We recommend organizing your knowledge base by department and business function. This structure helps Boss-Agent to understand the context of your data and perform more accurate searches. Here is an example structure:
+
+```
+/path/to/your/knowledge_base/
+├── finance/
+│   ├── financial_reports/
+│   ├── expense_reports/
+│   └── invoices/
+├── human_resources/
+│   ├── employee_data/
+│   └── performance_reviews/
+├── sales/
+│   ├── weekly_reports/
+│   └── customer_feedback/
+└── marketing/
+    └── ...
+```
+
+### 2. File Naming Convention
+
+A consistent file naming convention is crucial for time-based queries and reports. We recommend the following format:
+
+`[YYYY-MM-DD]_[Theme]_[Optional-Description].[ext]`
+
+**Examples:**
+- `2024-Q2_income-statement.pdf`
+- `2023_annual-report.txt`
+- `2024-W26_sales-summary.html`
+
+### 3. Supported File Formats
+
+- **Directly Supported (Text-based):** `.txt`, `.md`, `.html`, `.csv`, `.json`
+- **Automatic Text Extraction:** `.pdf`, `.docx`
+- **Other Formats:** For other formats like Excel (`.xlsx`), we recommend exporting the data to a supported format (e.g., `.csv`) before placing it in the knowledge base.
+
+### 4. Configuration
+
+You must specify the path to your knowledge base in the `config.ini` file located in the root of the project.
+
+```ini
+[knowledge_base]
+path = /path/to/your/knowledge_base
+```
+
 ## Environment
 
 You need to set up 2 `.env` files to run both frontend and backend

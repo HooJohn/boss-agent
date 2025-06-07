@@ -7,9 +7,10 @@ import {
   X,
   Share,
   Loader2,
+  Settings2,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { Orbitron } from "next/font/google";
@@ -22,6 +23,7 @@ import { useAppEvents } from "@/hooks/use-app-events";
 import { useAppContext } from "@/context/app-context";
 
 import SidebarButton from "@/components/sidebar-button";
+import SettingsDrawer from "@/components/settings-drawer";
 import ConnectionStatus from "@/components/connection-status";
 import Browser from "@/components/browser";
 import QuestionInput from "@/components/question-input";
@@ -36,6 +38,7 @@ const orbitron = Orbitron({
 });
 
 export default function HomeContent() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const xtermRef = useRef<XTerm | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { state, dispatch } = useAppContext();
@@ -44,14 +47,12 @@ export default function HomeContent() {
 
   const { deviceId } = useDeviceId();
 
-  // Use the Session Manager hook
   const { sessionId, isLoadingSession, isReplayMode, setSessionId } =
     useSessionManager({
       searchParams,
       handleEvent,
     });
 
-  // Use the WebSocket hook
   const { socket, sendMessage } = useWebSocket(
     deviceId,
     isReplayMode,
@@ -110,7 +111,6 @@ export default function HomeContent() {
       payload: newUserMessage,
     });
 
-    // send init agent event when first query
     if (!sessionId) {
       sendMessage({
         type: "init_agent",
@@ -121,7 +121,6 @@ export default function HomeContent() {
       });
     }
 
-    // Send the query using the existing socket connection
     sendMessage({
       type: "query",
       content: {
@@ -138,8 +137,6 @@ export default function HomeContent() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      // This is a bit of a hack, as we don't have the searchMode here.
-      // We'll assume the default 'all' when submitting with Enter.
       handleQuestionSubmit((e.target as HTMLTextAreaElement).value, "all");
     }
   };
@@ -179,7 +176,6 @@ export default function HomeContent() {
       })
     );
 
-    // Update the edited message and remove all subsequent messages
     const editIndex = state.messages.findIndex(
       (m) => m.id === state.editingMessage?.id
     );
@@ -227,7 +223,6 @@ export default function HomeContent() {
       return;
     }
 
-    // Send cancel message to the server
     socket.send(
       JSON.stringify({
         type: "cancel",
@@ -263,203 +258,135 @@ export default function HomeContent() {
   }, [state.messages?.length]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#191E1B]">
-      <SidebarButton />
-      {!isInChatView && (
-        <Image
-          src="/logo-only.png"
-          alt="Boss-Agent Logo"
-          width={80}
-          height={80}
-          className="rounded-sm"
-        />
-      )}
-      <div
-        className={`flex justify-between w-full ${
-          !isInChatView ? "pt-0 pb-8" : "p-4"
-        }`}
-      >
-        {!isInChatView && <div />}
-        <motion.h1
-          className={`font-semibold text-center ${
-            isInChatView ? "flex items-center gap-x-2 text-2xl" : "text-4xl"
-          } ${orbitron.className}`}
-          layout
-          layoutId="page-title"
-        >
-          {isInChatView && (
-            <Image
-              src="/logo-only.png"
-              alt="Boss-Agent Logo"
-              width={40}
-              height={40}
-              className="rounded-sm"
-            />
-          )}
-          {`Boss-Agent`}
-        </motion.h1>
-        {isInChatView ? (
-          <div className="flex gap-x-2">
-            <Button
-              className="cursor-pointer h-10"
-              variant="outline"
-              onClick={handleShare}
-            >
-              <Share /> Share
-            </Button>
-            <Button className="cursor-pointer" onClick={handleResetChat}>
-              <X className="size-5" />
-            </Button>
-          </div>
-        ) : (
-          <div />
-        )}
-      </div>
+    <div className="flex flex-col items-center justify-center h-full bg-[#191E1B] w-full flex-grow">
+      <SettingsDrawer
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
       {isLoadingSession ? (
         <div className="flex flex-col items-center justify-center p-8">
           <Loader2 className="h-8 w-8 text-white animate-spin mb-4" />
-          <p className="text-white text-lg">Loading session history...</p>
+          <p className="text-white text-lg">正在加载...</p>
         </div>
       ) : (
-        <LayoutGroup>
-          <AnimatePresence mode="wait">
-            {!isInChatView ? (
-              <QuestionInput
-                placeholder="Give Boss-Agent a task to work on..."
-                value={state.currentQuestion}
-                setValue={(value) =>
-                  dispatch({ type: "SET_CURRENT_QUESTION", payload: value })
-                }
-                handleKeyDown={handleKeyDown}
-                handleSubmit={handleQuestionSubmit}
-                isDisabled={!socket || socket.readyState !== WebSocket.OPEN}
-                handleEnhancePrompt={handleEnhancePrompt}
-              />
-            ) : (
-              <motion.div
-                key="chat-view"
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                  mass: 1,
-                }}
-                className="w-full grid grid-cols-10 write-report overflow-hidden flex-1 pr-4 pb-4 "
-              >
-                <ChatMessage
-                  handleClickAction={handleClickAction}
-                  isReplayMode={isReplayMode}
-                  messagesEndRef={messagesEndRef}
-                  setCurrentQuestion={(value) =>
-                    dispatch({ type: "SET_CURRENT_QUESTION", payload: value })
+        <div className="w-full grid grid-cols-10 gap-4 flex-1 h-full overflow-hidden">
+          <div className="col-span-4 bg-[#1e1f23] border border-[#3A3B3F] p-4 rounded-2xl flex flex-col">
+            <div className="flex justify-end mb-4">
+              <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
+                <Settings2 className="h-5 w-5 text-gray-400" />
+              </Button>
+            </div>
+            <ChatMessage
+              key={sessionId}
+              handleClickAction={handleClickAction}
+              isReplayMode={isReplayMode}
+              messagesEndRef={messagesEndRef}
+              setCurrentQuestion={(value) =>
+                dispatch({ type: "SET_CURRENT_QUESTION", payload: value })
+              }
+              handleKeyDown={handleKeyDown}
+              handleQuestionSubmit={handleQuestionSubmit}
+              handleEnhancePrompt={handleEnhancePrompt}
+              handleCancel={handleCancelQuery}
+              handleEditMessage={handleEditMessage}
+            />
+          </div>
+          <div className="col-span-6 bg-[#1e1f23] border border-[#3A3B3F] p-4 rounded-2xl flex flex-col">
+            <div className="pb-4 bg-neutral-850 flex items-center justify-between">
+              <div className="flex gap-x-4">
+                <Button
+                  className={`cursor-pointer hover:!bg-black ${
+                    state.activeTab === TAB.BROWSER
+                      ? "bg-gradient-skyblue-lavender !text-black"
+                      : ""
+                  }`}
+                  variant="outline"
+                  onClick={() =>
+                    dispatch({
+                      type: "SET_ACTIVE_TAB",
+                      payload: TAB.BROWSER,
+                    })
                   }
-                  handleKeyDown={handleKeyDown}
-                  handleQuestionSubmit={handleQuestionSubmit}
-                  handleEnhancePrompt={handleEnhancePrompt}
-                  handleCancel={handleCancelQuery}
-                  handleEditMessage={handleEditMessage}
-                />
-
-                <div className="col-span-6 bg-[#1e1f23] border border-[#3A3B3F] p-4 rounded-2xl">
-                  <div className="pb-4 bg-neutral-850 flex items-center justify-between">
-                    <div className="flex gap-x-4">
-                      <Button
-                        className={`cursor-pointer hover:!bg-black ${
-                          state.activeTab === TAB.BROWSER
-                            ? "bg-gradient-skyblue-lavender !text-black"
-                            : ""
-                        }`}
-                        variant="outline"
-                        onClick={() =>
-                          dispatch({
-                            type: "SET_ACTIVE_TAB",
-                            payload: TAB.BROWSER,
-                          })
-                        }
-                      >
-                        <Globe className="size-4" /> Browser
-                      </Button>
-                    </div>
-                  </div>
-                  <Browser
-                    className={
-                      state.activeTab === TAB.BROWSER &&
-                      (state.currentActionData?.type === TOOL.VISIT ||
-                        isBrowserTool)
-                        ? ""
-                        : "hidden"
-                    }
-                    url={
-                      state.currentActionData?.data?.tool_input?.url ||
-                      state.browserUrl
-                    }
-                    screenshot={
-                      isBrowserTool
-                        ? (state.currentActionData?.data.result as string)
-                        : undefined
-                    }
-                    raw={
-                      state.currentActionData?.type === TOOL.VISIT
-                        ? (state.currentActionData?.data?.result as string)
-                        : undefined
-                    }
-                  />
-                  <SearchBrowser
-                    className={
-                      state.activeTab === TAB.BROWSER &&
-                      state.currentActionData?.type === TOOL.WEB_SEARCH
-                        ? ""
-                        : "hidden"
-                    }
-                    keyword={state.currentActionData?.data.tool_input?.query}
-                    search_results={
-                      state.currentActionData?.type === TOOL.WEB_SEARCH &&
-                      state.currentActionData?.data?.result
-                        ? parseJson(
-                            state.currentActionData?.data?.result as string
-                          )
-                        : undefined
-                    }
-                  />
-                  <ImageBrowser
-                    className={
-                      (state.activeTab === TAB.BROWSER &&
-                        state.currentActionData?.type ===
-                          TOOL.IMAGE_GENERATE) ||
-                      state.currentActionData?.type === TOOL.IMAGE_SEARCH
-                        ? ""
-                        : "hidden"
-                    }
-                    url={
-                      state.currentActionData?.data.tool_input
-                        ?.output_filename ||
-                      state.currentActionData?.data.tool_input?.query
-                    }
-                    images={
-                      state.currentActionData?.type === TOOL.IMAGE_SEARCH
-                        ? parseJson(
-                            state.currentActionData?.data?.result as string
-                          )?.map(
-                            (item: { image_url: string }) => item?.image_url
-                          )
-                        : [
-                            getRemoteURL(
-                              state.currentActionData?.data.tool_input
-                                ?.output_filename
-                            ),
-                          ]
-                    }
-                  />
+                >
+                  <Globe className="size-4" /> 浏览器
+                </Button>
+              </div>
+              <ConnectionStatus />
+            </div>
+            <div className="flex-grow overflow-y-auto">
+              <Browser
+                className={
+                  state.currentActionData?.type === TOOL.VISIT || isBrowserTool
+                    ? ""
+                    : "hidden"
+                }
+                url={
+                  state.currentActionData?.data?.tool_input?.url ||
+                  state.browserUrl
+                }
+                screenshot={
+                  isBrowserTool
+                    ? (state.currentActionData?.data.result as string)
+                    : undefined
+                }
+                raw={
+                  state.currentActionData?.type === TOOL.VISIT
+                    ? (state.currentActionData?.data?.result as string)
+                    : undefined
+                }
+              />
+              <SearchBrowser
+                className={
+                  state.currentActionData?.type === TOOL.WEB_SEARCH
+                    ? ""
+                    : "hidden"
+                }
+                keyword={state.currentActionData?.data.tool_input?.query}
+                search_results={
+                  state.currentActionData?.type === TOOL.WEB_SEARCH &&
+                  state.currentActionData?.data?.result
+                    ? parseJson(
+                        state.currentActionData?.data?.result as string
+                      )
+                    : undefined
+                }
+              />
+              <ImageBrowser
+                className={
+                  state.currentActionData?.type === TOOL.IMAGE_GENERATE ||
+                  state.currentActionData?.type === TOOL.IMAGE_SEARCH
+                    ? ""
+                    : "hidden"
+                }
+                url={
+                  state.currentActionData?.data.tool_input
+                    ?.output_filename ||
+                  state.currentActionData?.data.tool_input?.query
+                }
+                images={
+                  state.currentActionData?.type === TOOL.IMAGE_SEARCH
+                    ? parseJson(
+                        state.currentActionData?.data?.result as string
+                      )?.map(
+                        (item: { image_url: string }) => item?.image_url
+                      )
+                    : [
+                        getRemoteURL(
+                          state.currentActionData?.data.tool_input
+                            ?.output_filename
+                        ),
+                      ]
+                }
+              />
+              {!state.currentActionData && (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <p>浏览器视图</p>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </LayoutGroup>
+              )}
+            </div>
+          </div>
+        </div>
       )}
-      {!isInChatView && <ConnectionStatus />}
     </div>
   );
 }

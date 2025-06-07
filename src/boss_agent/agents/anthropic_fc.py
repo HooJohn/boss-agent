@@ -1,7 +1,7 @@
 import asyncio
 import logging
-import os  # 添加os模块导入
-from typing import Any, Optional
+import os
+from typing import Any, Optional, Dict
 import uuid
 
 from typing import List
@@ -17,7 +17,7 @@ from boss_agent.db.manager import DatabaseManager
 from boss_agent.tools import AgentToolManager
 from boss_agent.utils.constants import COMPLETE_MESSAGE, DEFAULT_MODEL
 from boss_agent.utils.workspace_manager import WorkspaceManager
-from boss_agent.llm.gemini import GeminiDirectClient  # 添加Gemini客户端导入
+from boss_agent.llm.gemini import GeminiDirectClient
 
 TOOL_RESULT_INTERRUPT_MESSAGE = "Tool execution interrupted by user."
 AGENT_INTERRUPT_MESSAGE = "Agent interrupted by user."
@@ -63,29 +63,15 @@ try breaking down the task into smaller steps. After call this tool to update or
         websocket: Optional[WebSocket] = None,
         session_id: Optional[uuid.UUID] = None,
         interactive_mode: bool = True,
-        use_gemini: bool = True,  # 添加Gemini使用标志
+        use_gemini: bool = True,
     ):
-        """Initialize the agent.
-
-        Args:
-            system_prompt: The system prompt to use
-            client: The LLM client to use
-            tools: List of tools to use
-            message_queue: Message queue for real-time communication
-            logger_for_agent_logs: Logger for agent logs
-            context_manager: Context manager for managing conversation context
-            max_output_tokens_per_turn: Maximum tokens per turn
-            max_turns: Maximum number of turns
-            websocket: Optional WebSocket for real-time communication
-            session_id: UUID of the session this agent belongs to
-        """
+        """Initialize the agent."""
         super().__init__()
         self.workspace_manager = workspace_manager
         self.system_prompt = system_prompt
         
-        # 使用Gemini客户端替代
         if use_gemini and os.getenv("GEMINI_API_KEY"):
-            self.client = GeminiDirectClient(model_name=DEFAULT_MODEL)  # 添加必要的模型名称参数
+            self.client = GeminiDirectClient(model_name=DEFAULT_MODEL)
         else:
             self.client = client
             
@@ -103,7 +89,6 @@ try breaking down the task into smaller steps. After call this tool to update or
         self.history = MessageHistory(context_manager)
         self.session_id = session_id
 
-        # Initialize database manager
         self.db_manager = DatabaseManager()
 
         self.message_queue = message_queue
@@ -115,7 +100,6 @@ try breaking down the task into smaller steps. After call this tool to update or
                 try:
                     message: RealtimeEvent = await self.message_queue.get()
 
-                    # Save all events to database if we have a session
                     if self.session_id is not None:
                         self.db_manager.save_event(self.session_id, message)
                     else:
@@ -123,7 +107,6 @@ try breaking down the task into smaller steps. After call this tool to update or
                             f"No session ID, skipping event: {message}"
                         )
 
-                    # Only send to websocket if this is not an event from the client and websocket exists
                     if (
                         message.type != EventType.USER_MESSAGE
                         and self.websocket is not None
@@ -131,11 +114,9 @@ try breaking down the task into smaller steps. After call this tool to update or
                         try:
                             await self.websocket.send_json(message.model_dump())
                         except Exception as e:
-                            # If websocket send fails, just log it and continue processing
                             self.logger_for_agent_logs.warning(
                                 f"Failed to send message to websocket: {str(e)}"
                             )
-                            # Set websocket to None to prevent further attempts
                             self.websocket = None
 
                     self.message_queue.task_done()
@@ -168,6 +149,7 @@ try breaking down the task into smaller steps. After call this tool to update or
         self,
         tool_input: dict[str, Any],
         message_history: Optional[MessageHistory] = None,
+        tool_choice: Optional[Dict[str, Any]] = None,
     ) -> ToolImplOutput:
         instruction = tool_input["instruction"]
         files = tool_input["files"]
@@ -175,17 +157,14 @@ try breaking down the task into smaller steps. After call this tool to update or
         user_input_delimiter = "-" * 45 + " USER INPUT " + "-" * 45 + "\n" + instruction
         self.logger_for_agent_logs.info(f"\n{user_input_delimiter}\n")
 
-        # Add instruction to dialog before getting model response
         image_blocks = []
         if files:
-            # First, list all attached files
             instruction = f"""{instruction}\n\nAttached files:\n"""
             for file in files:
                 relative_path = self.workspace_manager.relative_path(file)
                 instruction += f" - {relative_path}\n"
                 self.logger_for_agent_logs.info(f"Attached file: {relative_path}")
 
-            # Then process images for image blocks
             for file in files:
                 ext = file.split(".")[-1]
                 if ext == "jpg":
@@ -215,11 +194,9 @@ try breaking down the task into smaller steps. After call this tool to update or
             delimiter = "-" * 45 + " NEW TURN " + "-" * 45
             self.logger_for_agent_logs.info(f"\n{delimiter}\n")
 
-            # Get tool parameters for available tools
             all_tool_params = self._validate_tool_parameters()
 
             if self.interrupted:
-                # Handle interruption during model generation or other operations
                 self.add_fake_assistant_turn(AGENT_INTERRUPT_FAKE_MODEL_RSP)
                 return ToolImplOutput(
                     tool_output=AGENT_INTERRUPT_MESSAGE,
@@ -230,14 +207,13 @@ try breaking down the task into smaller steps. After call this tool to update or
                 f"(Current token count: {self.history.count_tokens()})\n"
             )
 
-            # 确保返回类型正确
             response = self.client.generate(
                 messages=self.history.get_messages_for_llm(),
                 max_tokens=self.max_output_tokens,
                 tools=all_tool_params,
                 system_prompt=self.system_prompt,
+                tool_choice=tool_choice,
             )
-            # 适配Gemini和Anthropic的返回格式差异
             if isinstance(response, tuple):
                 model_response, _ = response
             else:
@@ -246,14 +222,11 @@ try breaking down the task into smaller steps. After call this tool to update or
             if len(model_response) == 0:
                 model_response = [TextResult(text=COMPLETE_MESSAGE)]
 
-            # Add the raw response to the canonical history
             self.history.add_assistant_turn(model_response)
 
-            # Handle tool calls
             pending_tool_calls = self.history.get_pending_tool_calls()
 
             if len(pending_tool_calls) == 0:
-                # No tools were called, so assume the task is complete
                 self.logger_for_agent_logs.info("[no tools were called]")
                 self.message_queue.put_nowait(
                     RealtimeEvent(
@@ -293,9 +266,7 @@ try breaking down the task into smaller steps. After call this tool to update or
                     f"Top-level agent planning next step: {text_result.text}\n",
                 )
 
-            # Handle tool call by the agent
             if self.interrupted:
-                # Handle interruption during tool execution
                 self.add_tool_call_result(tool_call, TOOL_RESULT_INTERRUPT_MESSAGE)
                 self.add_fake_assistant_turn(TOOL_CALL_INTERRUPT_FAKE_MODEL_RSP)
                 return ToolImplOutput(
@@ -306,8 +277,6 @@ try breaking down the task into smaller steps. After call this tool to update or
 
             self.add_tool_call_result(tool_call, tool_result)
             if self.tool_manager.should_stop():
-                # Add a fake model response, so the next turn is the user's
-                # turn in case they want to resume
                 self.add_fake_assistant_turn(self.tool_manager.get_final_answer())
                 return ToolImplOutput(
                     tool_output=self.tool_manager.get_final_answer(),
@@ -330,19 +299,10 @@ try breaking down the task into smaller steps. After call this tool to update or
         instruction: str,
         files: list[str] | None = None,
         resume: bool = False,
+        tool_choice: Optional[Dict[str, Any]] = None,
         orientation_instruction: str | None = None,
     ) -> str:
-        """Start a new agent run.
-
-        Args:
-            instruction: The instruction to the agent.
-            resume: Whether to resume the agent from the previous state,
-                continuing the dialog.
-            orientation_instruction: Optional orientation instruction
-
-        Returns:
-            A tuple of (result, message).
-        """
+        """Start a new agent run."""
         self.tool_manager.reset()
         if not resume:
             self.history.clear()
@@ -354,12 +314,10 @@ try breaking down the task into smaller steps. After call this tool to update or
         }
         if orientation_instruction:
             tool_input["orientation_instruction"] = orientation_instruction
-        return self.run(tool_input, self.history)
+        return self.run(tool_input, self.history, tool_choice)
 
     def clear(self):
-        """Clear the dialog and reset interruption state.
-        Note: This does NOT clear the file manager, preserving file context.
-        """
+        """Clear the dialog and reset interruption state."""
         self.history.clear()
         self.interrupted = False
 

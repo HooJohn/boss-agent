@@ -12,6 +12,7 @@ import asyncio
 import json
 import logging
 import uuid
+import configparser
 from pathlib import Path
 from typing import Dict, List, Set, Any
 from dotenv import load_dotenv
@@ -131,10 +132,14 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     active_connections.add(websocket)
 
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    knowledge_base_path = config.get('knowledge_base', 'path', fallback=global_args.workspace)
+
     workspace_manager, session_uuid = create_workspace_manager_for_connection(
-        global_args.workspace, global_args.use_container_workspace
+        knowledge_base_path, global_args.use_container_workspace
     )
-    print(f"Workspace manager created: {workspace_manager}")
+    print(f"Workspace manager created for knowledge base: {workspace_manager}")
 
     try:    
         # Initial connection message with session info
@@ -197,6 +202,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     resume = content.get("resume", False)
                     files = content.get("files", [])
                     search_mode = content.get("search_mode", "all")
+                    tool_choice = content.get("tool_choice")
 
                     # Send acknowledgment
                     await websocket.send_json(
@@ -208,7 +214,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     # Run the agent with the query in a separate task
                     task = asyncio.create_task(
-                        run_agent_async(websocket, user_input, resume, files, search_mode)
+                        run_agent_async(websocket, user_input, resume, files, search_mode, tool_choice)
                     )
                     active_tasks[websocket] = task
 
@@ -422,7 +428,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 async def run_agent_async(
-    websocket: WebSocket, user_input: str, resume: bool = False, files: List[str] = [], search_mode: str = "all"
+    websocket: WebSocket, user_input: str, resume: bool = False, files: List[str] = [], search_mode: str = "all", tool_choice: Dict[str, Any] = None
 ):
     """Run the agent asynchronously and send results back to the websocket."""
     agent = active_agents.get(websocket)
@@ -443,7 +449,7 @@ async def run_agent_async(
         )
         # Run the agent with the query
         await anyio.to_thread.run_sync(
-            agent.run_agent, user_input, files, resume, abandon_on_cancel=True
+            agent.run_agent, user_input, files, resume, tool_choice, abandon_on_cancel=True
         )
 
     except Exception as e:

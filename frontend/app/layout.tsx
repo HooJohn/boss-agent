@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { AppProvider } from "@/context/app-context";
 import "./globals.css";
 import Providers from "@/providers";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
   title: "Boss-Agent",
-  description: "Boss-Agent is a tool for in-depth analysis and research.",
+  description: "智能决策，数据驱动的企业报表与分析AI",
 };
 
 export default function RootLayout({
@@ -34,8 +37,16 @@ export default function RootLayout({
         />
         <link rel="manifest" href="/favicon/site.webmanifest" />
       </head>
-      <body className={`antialiased`}>
-        <Providers>{children}</Providers>
+      <body className={`antialiased flex flex-col h-screen`}>
+        <AppProvider>
+          <Providers>
+            <Header />
+            <main className="flex-grow container mx-auto p-4 flex overflow-y-auto">
+              {children}
+            </main>
+            <Footer />
+          </Providers>
+        </AppProvider>
       </body>
     </html>
   );
