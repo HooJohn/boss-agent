@@ -17,16 +17,16 @@ export function useSessionManager({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
 
-  const isReplayMode = !!searchParams.get("id");
+  const isReplayMode = !!searchParams.get("session_id");
 
   // Get session ID from URL params
   useEffect(() => {
-    const id = searchParams.get("id");
+    const id = searchParams.get("session_id");
     setSessionId(id);
   }, [searchParams]);
 
   const fetchSessionEvents = useCallback(async () => {
-    const id = searchParams.get("id");
+    const id = searchParams.get("session_id");
     if (!id) return;
 
     setIsLoadingSession(true);

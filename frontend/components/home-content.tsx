@@ -8,7 +8,8 @@ import {
   Share,
   Loader2,
   Settings2,
-  ArrowDownToLine
+  ArrowDownToLine,
+  History,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -24,6 +25,7 @@ import { useAppContext } from "@/context/app-context";
 
 import SidebarButton from "@/components/sidebar-button";
 import SettingsDrawer from "@/components/settings-drawer";
+import HistoryDrawer from "@/components/history-drawer";
 import ConnectionStatus from "@/components/connection-status";
 import Browser from "@/components/browser";
 import QuestionInput from "@/components/question-input";
@@ -39,6 +41,7 @@ const orbitron = Orbitron({
 
 export default function HomeContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const xtermRef = useRef<XTerm | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -260,6 +263,10 @@ export default function HomeContent() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
       />
+      <HistoryDrawer
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+      />
       {isLoadingSession ? (
         <div className="flex flex-col items-center justify-center p-8">
           <Loader2 className="h-8 w-8 text-white animate-spin mb-4" />
@@ -270,7 +277,10 @@ export default function HomeContent() {
           <div 
             className="col-span-9 bg-[#1e1f23] border border-[#3A3B3F] rounded-2xl flex flex-col"
           >
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-between items-center mb-4">
+              <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(true)}>
+                <History className="h-5 w-5 text-gray-400" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
                 <Settings2 className="h-5 w-5 text-gray-400" />
               </Button>
