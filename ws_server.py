@@ -383,10 +383,15 @@ async def get_sessions_by_device_id(device_id: str):
             sessions = []
             for row in result:
                 first_message_payload = json.loads(row.first_message) if row.first_message else {}
+                from datetime import datetime
+                created_at = row.created_at
+                if isinstance(created_at, str):
+                    created_at = datetime.fromisoformat(created_at)
+                
                 sessions.append({
                     "id": row.session_id,
                     "workspace_dir": row.workspace_dir,
-                    "created_at": row.created_at.isoformat(),
+                    "created_at": created_at.isoformat(),
                     "device_id": row.device_id,
                     "first_message": first_message_payload.get("content", {}).get("text", ""),
                 })

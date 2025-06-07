@@ -97,19 +97,28 @@ def parse_common_args(parser: ArgumentParser):
     return parser
 
 
+from datetime import datetime
+
 def create_workspace_manager_for_connection(
     workspace_root: str, use_container_workspace: bool = False
 ):
     """Create a new workspace manager instance for a websocket connection."""
-    # Create unique subdirectory for this connection
-    connection_id = str(uuid.uuid4())
-    workspace_path = Path(workspace_root).resolve()
-    connection_workspace = workspace_path / connection_id
+    # Create unique subdirectory for this connection in a 'sessions' folder
+    # at the same level as the knowledge base.
+    knowledge_base_path = Path(workspace_root).resolve()
+    sessions_path = knowledge_base_path.parent / "sessions"
+    
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    connection_id = f"{timestamp}-{str(uuid.uuid4())}"
+    
+    connection_workspace = sessions_path / connection_id
     connection_workspace.mkdir(parents=True, exist_ok=True)
 
-    # Initialize workspace manager with connection-specific subdirectory
+    # Initialize workspace manager with the knowledge base as the root,
+    # but with a specific session workspace for writes.
     workspace_manager = WorkspaceManager(
-        root=connection_workspace,
+        root=knowledge_base_path,
+        session_workspace=connection_workspace,
         container_workspace=use_container_workspace,
     )
 

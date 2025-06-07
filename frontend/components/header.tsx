@@ -30,7 +30,8 @@ const Header = () => {
       fetch(`/api/sessions/${deviceId}`)
         .then((res) => res.json())
         .then((data) => {
-          setSessions(data.sessions);
+          console.log("Fetched sessions data:", data);
+          setSessions(data.sessions || []);
         });
     }
   }, [deviceId]);

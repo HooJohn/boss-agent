@@ -15,7 +15,7 @@ class Session(Base):
 
     # Store UUID as string in SQLite
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    workspace_dir = Column(String, unique=True, nullable=False)
+    workspace_dir = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     device_id = Column(String, nullable=True)  # Add device_id column
 

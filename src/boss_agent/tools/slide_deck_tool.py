@@ -25,20 +25,23 @@ class SlideDeckInitTool(LLMTool):
         message_history: Optional[MessageHistory] = None,
     ) -> ToolImplOutput:
         try:
-            # Create the presentation directory if it doesn't exist
-            presentation_dir = f"{self.workspace_manager.root}/presentation"
+            # Create the presentation directory in the session workspace
+            presentation_dir = self.workspace_manager.workspace_path(
+                "presentation", for_write=True
+            )
             os.makedirs(presentation_dir, exist_ok=True)
 
             # Clone the reveal.js repository to the specified path
-            clone_command = f"git clone https://github.com/khoangothe/reveal.js.git {self.workspace_manager.root}/presentation/reveal.js"
-            
+            reveal_js_path = presentation_dir / "reveal.js"
+            clone_command = f"git clone https://github.com/khoangothe/reveal.js.git {reveal_js_path}"
+
             # Execute the clone command
             clone_result = subprocess.run(
                 clone_command,
                 shell=True,
                 capture_output=True,
                 text=True,
-                cwd=self.workspace_manager.root
+                cwd=self.workspace_manager.session_workspace,
             )
             
             if clone_result.returncode != 0:
@@ -50,14 +53,14 @@ class SlideDeckInitTool(LLMTool):
 
             # Install dependencies
             install_command = "npm install"
-            
+
             # Execute the install command in the reveal.js directory
             install_result = subprocess.run(
                 install_command,
                 shell=True,
                 capture_output=True,
                 text=True,
-                cwd=f"{self.workspace_manager.root}/presentation/reveal.js"
+                cwd=reveal_js_path,
             )
             
             if install_result.returncode != 0:
@@ -123,7 +126,9 @@ class SlideDeckCompleteTool(LLMTool):
                 )
         slide_iframes = [SLIDE_IFRAME_TEMPLATE.format(slide_path=slide_path) for slide_path in slide_paths]
         try:
-            index_path = f"{self.workspace_manager.root}/presentation/reveal.js/index.html"
+            index_path = self.workspace_manager.workspace_path(
+                "presentation/reveal.js/index.html", for_write=True
+            )
             with open(index_path, "r") as file:
                 index_content = file.read()
         except Exception as e:
