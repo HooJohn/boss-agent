@@ -51,6 +51,7 @@ from boss_agent.tools.advanced_tools.image_gen_tool import ImageGenerateTool
 from boss_agent.tools.advanced_tools.pdf_tool import PdfTextExtractTool
 from boss_agent.tools.deep_research_tool import DeepResearchTool
 from boss_agent.tools.list_html_links_tool import ListHtmlLinksTool
+from boss_agent.tools.internal_search_tool import InternalSearchTool
 
 
 def get_system_tools(
@@ -78,6 +79,7 @@ def get_system_tools(
     tools = [
         MessageTool(),
         WebSearchTool(),
+        InternalSearchTool(workspace_manager=workspace_manager),
         VisitWebpageTool(),
         StaticDeployTool(workspace_manager=workspace_manager),
         ListHtmlLinksTool(workspace_manager=workspace_manager),

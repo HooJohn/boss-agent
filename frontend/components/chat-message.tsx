@@ -21,7 +21,7 @@ interface ChatMessageProps {
   ) => void;
   setCurrentQuestion: (value: string) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  handleQuestionSubmit: (question: string) => void;
+  handleQuestionSubmit: (question: string, searchMode: string, fileTypeFilter?: string[], pathFilter?: string) => void;
   handleEnhancePrompt: () => void;
   handleCancel: () => void;
   handleEditMessage: (newQuestion: string) => void;
@@ -307,14 +307,14 @@ const ChatMessage = ({
         {state.isCompleted && (
           <div className="flex gap-x-2 items-center bg-[#25BA3B1E] text-green-600 text-sm p-2 rounded-full">
             <Check className="size-4" />
-            <span>II-Agent has completed the current task.</span>
+            <span>Boss-Agent has completed the current task.</span>
           </div>
         )}
 
         {state.isStopped && (
           <div className="flex gap-x-2 items-center bg-[#ffbf361f] text-yellow-300 text-sm p-2 rounded-full">
             <CircleStop className="size-4" />
-            <span>II-Agent has stopped, send a new message to continue.</span>
+            <span>Boss-Agent has stopped, send a new message to continue.</span>
           </div>
         )}
 
@@ -334,7 +334,7 @@ const ChatMessage = ({
           value={state.currentQuestion}
           setValue={setCurrentQuestion}
           handleKeyDown={handleKeyDown}
-          handleSubmit={handleQuestionSubmit}
+          handleSubmit={(question, searchMode) => handleQuestionSubmit(question, searchMode)}
           handleEnhancePrompt={handleEnhancePrompt}
           handleCancel={handleCancel}
         />

@@ -77,7 +77,7 @@ export default function HomeContent() {
     });
   };
 
-  const handleQuestionSubmit = async (newQuestion: string) => {
+  const handleQuestionSubmit = async (newQuestion: string, searchMode: string, fileTypeFilter?: string[], pathFilter?: string) => {
     if (!newQuestion.trim() || state.isLoading) return;
 
     if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -128,6 +128,9 @@ export default function HomeContent() {
         text: newQuestion,
         resume: state.messages.length > 0,
         files: state.uploadedFiles?.map((file) => `.${file}`),
+        search_mode: searchMode,
+        file_type_filter: fileTypeFilter,
+        path_filter: pathFilter,
       },
     });
   };
@@ -135,7 +138,9 @@ export default function HomeContent() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleQuestionSubmit((e.target as HTMLTextAreaElement).value);
+      // This is a bit of a hack, as we don't have the searchMode here.
+      // We'll assume the default 'all' when submitting with Enter.
+      handleQuestionSubmit((e.target as HTMLTextAreaElement).value, "all");
     }
   };
 

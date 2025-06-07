@@ -23,6 +23,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { GoogleDocument, GooglePickerResponse } from "@/typings/agent";
 import { useGoogleDrive } from "@/hooks/use-google-drive";
 import { useAppContext } from "@/context/app-context";
@@ -47,7 +54,7 @@ interface QuestionInputProps {
   value: string;
   setValue: (value: string) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  handleSubmit: (question: string) => void;
+  handleSubmit: (question: string, searchMode: string) => void;
   isDisabled?: boolean;
   handleEnhancePrompt?: () => void;
   handleCancel?: () => void;
@@ -70,6 +77,7 @@ const QuestionInput = ({
   const [files, setFiles] = useState<FileUploadStatus[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGDriveAuthLoading, setIsGDriveAuthLoading] = useState(false);
+  const [searchMode, setSearchMode] = useState("all");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -251,7 +259,7 @@ const QuestionInput = ({
                       `Failed to fetch file: ${fileResponse.statusText}`
                     );
                   }
-                  const fileData = await fileResponse.json();
+                  const fileData = await response.json();
 
                   // Convert base64 data to a Blob
                   let blob;
@@ -468,21 +476,6 @@ const QuestionInput = ({
     }
   }, [isGoogleDriveConnected]);
 
-  // const removeFile = (fileName: string) => {
-  //   setFiles((prev) => {
-  //     // Find the file to remove
-  //     const fileToRemove = prev.find((file) => file.name === fileName);
-
-  //     // Revoke object URL if it exists
-  //     if (fileToRemove?.preview) {
-  //       URL.revokeObjectURL(fileToRemove.preview);
-  //     }
-
-  //     // Filter out the file
-  //     return prev.filter((file) => file.name !== fileName);
-  //   });
-  // };
-
   return (
     <motion.div
       key="input-view"
@@ -523,12 +516,6 @@ const QuestionInput = ({
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    {/* <button
-                      onClick={() => removeFile(file.name)}
-                      className="absolute -top-2 -right-2 bg-black rounded-full p-1 hover:bg-gray-700"
-                    >
-                      <X className="size-4 text-white" />
-                    </button> */}
                     {(state.isUploading || file.loading) && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-xl">
                         <Loader2 className="size-5 text-white animate-spin" />
@@ -591,12 +578,6 @@ const QuestionInput = ({
                     </span>
                     <span className="text-xs text-gray-500">{label}</span>
                   </div>
-                  {/* <button
-                    onClick={() => removeFile(file.name)}
-                    className="ml-2 rounded-full p-1 hover:bg-gray-700"
-                  >
-                    <X className="size-4" />
-                  </button> */}
                 </div>
               );
             })}
@@ -733,18 +714,30 @@ const QuestionInput = ({
                 <div className="size-3 rounded-xs bg-white" />
               </Button>
             ) : (
-              <Button
-                disabled={
-                  !value.trim() ||
-                  isDisabled ||
-                  state.isLoading ||
-                  state.isUploading
-                }
-                onClick={() => handleSubmit(value)}
-                className="cursor-pointer !border !border-red p-4 size-10 font-bold bg-gradient-skyblue-lavender rounded-full hover:scale-105 active:scale-95 transition-transform shadow-[0_4px_10px_rgba(0,0,0,0.2)]"
-              >
-                <ArrowUp className="size-5" />
-              </Button>
+              <>
+                <Select value={searchMode} onValueChange={setSearchMode}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Search Mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">内外网都搜</SelectItem>
+                    <SelectItem value="internal">仅内网</SelectItem>
+                    <SelectItem value="external">仅外网</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  disabled={
+                    !value.trim() ||
+                    isDisabled ||
+                    state.isLoading ||
+                    state.isUploading
+                  }
+                  onClick={() => handleSubmit(value, searchMode)}
+                  className="cursor-pointer !border !border-red p-4 size-10 font-bold bg-gradient-skyblue-lavender rounded-full hover:scale-105 active:scale-95 transition-transform shadow-[0_4px_10px_rgba(0,0,0,0.2)]"
+                >
+                  <ArrowUp className="size-5" />
+                </Button>
+              </>
             )}
           </div>
         </div>

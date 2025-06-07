@@ -196,6 +196,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     user_input = content.get("text", "")
                     resume = content.get("resume", False)
                     files = content.get("files", [])
+                    search_mode = content.get("search_mode", "all")
 
                     # Send acknowledgment
                     await websocket.send_json(
@@ -207,7 +208,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     # Run the agent with the query in a separate task
                     task = asyncio.create_task(
-                        run_agent_async(websocket, user_input, resume, files)
+                        run_agent_async(websocket, user_input, resume, files, search_mode)
                     )
                     active_tasks[websocket] = task
 
@@ -421,7 +422,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 async def run_agent_async(
-    websocket: WebSocket, user_input: str, resume: bool = False, files: List[str] = []
+    websocket: WebSocket, user_input: str, resume: bool = False, files: List[str] = [], search_mode: str = "all"
 ):
     """Run the agent asynchronously and send results back to the websocket."""
     agent = active_agents.get(websocket)
@@ -494,6 +495,7 @@ def create_agent_for_connection(
     workspace_manager: WorkspaceManager,
     websocket: WebSocket,
     tool_args: Dict[str, Any],
+    search_mode: str = "all",
 ):
     """Create a new agent instance for a websocket connection."""
     global global_args
@@ -543,6 +545,10 @@ def create_agent_for_connection(
         ask_user_permission=global_args.needs_permission,
         tool_args=tool_args,
     )
+    if search_mode == "internal":
+        tools = [tool for tool in tools if tool.name != "web_search"]
+    elif search_mode == "external":
+        tools = [tool for tool in tools if tool.name != "internal_search"]
     agent = AnthropicFC(
         system_prompt=SYSTEM_PROMPT_WITH_SEQ_THINKING if tool_args.get("sequential_thinking", False) else SYSTEM_PROMPT,
         client=client,
