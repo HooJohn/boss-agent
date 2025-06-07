@@ -61,34 +61,6 @@ const QuestionInput = ({
     }
   }, [value]);
 
-  const handleKeyDownWithAutoScroll = (
-    e: React.KeyboardEvent<HTMLTextAreaElement>
-  ) => {
-    if (e.key === "Enter") {
-      if (e.shiftKey) {
-        const textarea = textareaRef.current;
-        if (textarea) {
-          const cursorPosition = textarea.selectionStart;
-          const text = textarea.value;
-
-          const isAtLastLine = !text.substring(cursorPosition).includes("\n");
-
-          if (isAtLastLine) {
-            setTimeout(() => {
-              if (textarea) {
-                textarea.scrollTop = textarea.scrollHeight;
-              }
-            }, 0);
-          }
-        }
-      } else {
-        handleKeyDown(e);
-      }
-    } else {
-      handleKeyDown(e);
-    }
-  };
-
   return (
     <motion.div
       key="input-view"
@@ -110,32 +82,27 @@ const QuestionInput = ({
         />
       )}
 
-      <motion.div
-        className="relative rounded-xl"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-      >
+      <div className="relative flex flex-col bg-[#35363a] border border-[#ffffff0f] rounded-xl shadow-[0px_0px_10px_0px_rgba(0,0,0,0.02)]">
         <Textarea
-          className={`w-full p-4 pb-[72px] rounded-xl !text-lg focus:ring-0 resize-none !placeholder-gray-400 !bg-[#35363a] border-[#ffffff0f] shadow-[0px_0px_10px_0px_rgba(0,0,0,0.02)] min-h-[60px] max-h-[200px] ${textareaClassName}`}
+          className={`w-full p-4 pr-16 pb-[72px] rounded-xl !text-lg focus:ring-0 resize-none !placeholder-gray-400 !bg-[#35363a] border-[#ffffff0f] shadow-[0px_0px_10px_0px_rgba(0,0,0,0.02)] min-h-[120px] max-h-[300px] ${textareaClassName}`}
           placeholder={
             placeholder ||
             "输入您的问题或指令..."
           }
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDownWithAutoScroll}
+          onKeyDown={handleKeyDown}
           ref={textareaRef}
         />
-        <div className="flex justify-between items-center absolute bottom-0 py-4 m-px w-[calc(100%-4px)] rounded-b-xl bg-[#35363a] px-4">
-          <div className="flex items-center gap-x-3">
+        <div className="flex justify-between items-center p-2 border-t border-[#ffffff0f]">
+          <div className="flex items-center gap-x-2">
             {!hideSettings && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="hover:bg-gray-700/50 size-10 rounded-full cursor-pointer border border-[#ffffff0f] shadow-sm"
+                    className="hover:bg-gray-700/50 size-10 rounded-full"
                     onClick={() => setIsSettingsOpen(true)}
                     disabled={state.isLoading}
                   >
@@ -145,22 +112,18 @@ const QuestionInput = ({
                 <TooltipContent>设置</TooltipContent>
               </Tooltip>
             )}
-          </div>
-
-          <div className="flex items-center gap-x-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hover:bg-gray-700/50 size-10 rounded-full cursor-pointer border border-[#ffffff0f] shadow-sm"
+                  className="hover:bg-gray-700/50 size-10 rounded-full"
                   onClick={handleEnhancePrompt}
                   disabled={
                     state.isGeneratingPrompt ||
                     !value.trim() ||
                     isDisabled ||
-                    state.isLoading ||
-                    state.isUploading
+                    state.isLoading
                   }
                 >
                   {state.isGeneratingPrompt ? (
@@ -177,42 +140,42 @@ const QuestionInput = ({
               </TooltipTrigger>
               <TooltipContent>优化指令</TooltipContent>
             </Tooltip>
+          </div>
+
+          <div className="flex items-center gap-x-2">
+            <Select value={searchMode} onValueChange={setSearchMode}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="搜索模式" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">内外网都搜</SelectItem>
+                <SelectItem value="internal">仅内网</SelectItem>
+                <SelectItem value="external">仅外网</SelectItem>
+              </SelectContent>
+            </Select>
             {state.isLoading && handleCancel ? (
               <Button
                 onClick={handleCancel}
-                className="cursor-pointer size-10 font-bold p-0 !bg-black rounded-full hover:scale-105 active:scale-95 transition-transform shadow-[0_4px_10px_rgba(0,0,0,0.2)]"
+                className="cursor-pointer size-10 font-bold p-0 !bg-black rounded-full hover:scale-105 active:scale-95 transition-transform"
               >
                 <div className="size-3 rounded-xs bg-white" />
               </Button>
             ) : (
-              <>
-                <Select value={searchMode} onValueChange={setSearchMode}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="搜索模式" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">内外网都搜</SelectItem>
-                    <SelectItem value="internal">仅内网</SelectItem>
-                    <SelectItem value="external">仅外网</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  disabled={
-                    !value.trim() ||
-                    isDisabled ||
-                    state.isLoading ||
-                    state.isUploading
-                  }
-                  onClick={() => handleSubmit(value, searchMode)}
-                  className="cursor-pointer !border !border-red p-4 size-10 font-bold bg-gradient-skyblue-lavender rounded-full hover:scale-105 active:scale-95 transition-transform shadow-[0_4px_10px_rgba(0,0,0,0.2)]"
-                >
-                  <ArrowUp className="size-5" />
-                </Button>
-              </>
+              <Button
+                disabled={
+                  !value.trim() ||
+                  isDisabled ||
+                  state.isLoading
+                }
+                onClick={() => handleSubmit(value, searchMode)}
+                className="cursor-pointer !border !border-red p-4 size-10 font-bold bg-gradient-skyblue-lavender rounded-full hover:scale-105 active:scale-95 transition-transform"
+              >
+                <ArrowUp className="size-5" />
+              </Button>
             )}
           </div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 };

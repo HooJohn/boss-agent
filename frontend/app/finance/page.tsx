@@ -39,7 +39,7 @@ const FinancePage = () => {
 
   const handleGenerateReport = async () => {
     if (!reportType || !timeDimension) {
-      alert("请选择报告类型和时间维度。");
+      alert("请选择财务报告类型和时间以生成报告");
       return;
     }
     setIsLoading(true);
@@ -64,11 +64,11 @@ const FinancePage = () => {
 
   return (
     <div className="container mx-auto p-4 h-full flex flex-col">
-      <h1 className="text-2xl font-bold mb-4">财务数据分析</h1>
+      <h1 className="text-2xl font-bold mb-4">分析数据</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <Select onValueChange={setReportType}>
           <SelectTrigger>
-            <SelectValue placeholder="选择报告类型" />
+            <SelectValue placeholder="财务分析类型" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="balance_sheet">资产负债表</SelectItem>
@@ -78,7 +78,7 @@ const FinancePage = () => {
         </Select>
         <Select onValueChange={setTimeDimension}>
           <SelectTrigger>
-            <SelectValue placeholder="选择时间维度" />
+            <SelectValue placeholder="时间" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="2024-Q2">2024年第二季度</SelectItem>
@@ -93,7 +93,7 @@ const FinancePage = () => {
       <div className="flex-grow mt-4">
         <Card className="h-full">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>财务分析报告</CardTitle>
+            <CardTitle>即将生成报告...</CardTitle>
             <div className="flex space-x-2">
               <Button variant="outline" size="icon" disabled={!report || isLoading}>
                 <Printer className="h-4 w-4" />
@@ -112,7 +112,7 @@ const FinancePage = () => {
               <Markdown>{report}</Markdown>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
-                <p>请选择报告类型和时间维度以生成报告。</p>
+                <p>请选择财务报告类型和时间以生成报告</p>
               </div>
             )}
           </CardContent>

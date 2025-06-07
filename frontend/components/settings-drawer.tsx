@@ -100,7 +100,7 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-white">运行设置</h2>
+            <h2 className="text-xl font-semibold text-white">设置</h2>
             <div className="flex items-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -113,7 +113,7 @@ const SettingsDrawer = ({ isOpen, onClose }: SettingsDrawerProps) => {
                     <RotateCcw className="size-5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>重置默认设置</TooltipContent>
+                <TooltipContent>重置</TooltipContent>
               </Tooltip>
               <Button
                 variant="ghost"

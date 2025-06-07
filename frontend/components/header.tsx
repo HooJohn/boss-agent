@@ -3,15 +3,37 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useState, useEffect } from "react";
+import { useDeviceId } from "@/hooks/use-device-id";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Button } from "./ui/button";
+import { History } from "lucide-react";
 
 const Header = () => {
   const pathname = usePathname();
+  const { deviceId } = useDeviceId();
+  const [sessions, setSessions] = useState<{ id: string; first_message: string }[]>([]);
 
   const navLinks = [
     { href: "/", label: "助理" },
     { href: "/finance", label: "财务" },
-    { href: "/hr", label: "人事" }, // Assuming /hr for Human Resources
+    { href: "/hr", label: "人事" },
   ];
+
+  useEffect(() => {
+    if (deviceId) {
+      fetch(`/api/sessions/${deviceId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setSessions(data.sessions);
+        });
+    }
+  }, [deviceId]);
 
   return (
     <header className="bg-gray-800 text-white">
@@ -23,6 +45,20 @@ const Header = () => {
             <p className="text-sm text-gray-400">智能决策，数据驱动的企业报表与分析AI</p>
           </div>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <History className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {sessions.map((session) => (
+              <DropdownMenuItem key={session.id}>
+                <Link href={`/?id=${session.id}`}>{session.first_message || session.id}</Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <nav className="bg-gray-700">
         <div className="container mx-auto">

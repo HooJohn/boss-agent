@@ -37,11 +37,11 @@ export default function RootLayout({
         />
         <link rel="manifest" href="/favicon/site.webmanifest" />
       </head>
-      <body className={`antialiased flex flex-col h-screen`}>
+      <body className={`antialiased flex flex-col h-screen bg-gray-900 text-white`}>
         <AppProvider>
           <Providers>
             <Header />
-            <main className="flex-grow container mx-auto p-4 flex overflow-y-auto">
+            <main className="flex-grow container mx-auto p-4 flex flex-col">
               {children}
             </main>
             <Footer />

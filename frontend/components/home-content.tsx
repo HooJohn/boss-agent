@@ -8,6 +8,7 @@ import {
   Share,
   Loader2,
   Settings2,
+  ArrowDownToLine
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -39,8 +40,10 @@ const orbitron = Orbitron({
 
 export default function HomeContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
   const xtermRef = useRef<XTerm | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const { state, dispatch } = useAppContext();
   const { handleEvent, handleClickAction } = useAppEvents({ xtermRef });
   const searchParams = useSearchParams();
@@ -58,6 +61,25 @@ export default function HomeContent() {
     isReplayMode,
     handleEvent
   );
+
+  useEffect(() => {
+    if (autoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [state.messages, autoScroll]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const isAtBottom = element.scrollHeight - element.scrollTop === element.clientHeight;
+    setAutoScroll(isAtBottom);
+  };
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      setAutoScroll(true);
+    }
+  };
 
   const handleEnhancePrompt = () => {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -141,16 +163,6 @@ export default function HomeContent() {
     }
   };
 
-  const handleResetChat = () => {
-    window.location.href = "/";
-  };
-
-  const handleOpenVSCode = () => {
-    let url = process.env.NEXT_PUBLIC_VSCODE_URL || "http://127.0.0.1:8080";
-    url += `/?folder=${state.workspaceInfo}`;
-    window.open(url, "_blank");
-  };
-
   const parseJson = (jsonString: string) => {
     try {
       return JSON.parse(jsonString);
@@ -205,18 +217,6 @@ export default function HomeContent() {
     return `${process.env.NEXT_PUBLIC_API_URL}/workspace/${workspaceId}/${path}`;
   };
 
-  const isInChatView = useMemo(
-    () => !!sessionId && !isLoadingSession,
-    [isLoadingSession, sessionId]
-  );
-
-  const handleShare = () => {
-    if (!sessionId) return;
-    const url = `${window.location.origin}/?id=${sessionId}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Copied to clipboard");
-  };
-
   const handleCancelQuery = () => {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       toast.error("WebSocket connection is not open.");
@@ -253,12 +253,8 @@ export default function HomeContent() {
     [state.currentActionData]
   );
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [state.messages?.length]);
-
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-[#191E1B] w-full flex-grow">
+    <div className="flex flex-col h-full w-full flex-grow">
       <SettingsDrawer
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -269,29 +265,50 @@ export default function HomeContent() {
           <p className="text-white text-lg">正在加载...</p>
         </div>
       ) : (
-        <div className="w-full grid grid-cols-10 gap-4 flex-1 h-full overflow-hidden">
-          <div className="col-span-4 bg-[#1e1f23] border border-[#3A3B3F] p-4 rounded-2xl flex flex-col">
+        <div className="w-full grid grid-cols-12 gap-4 flex-1 h-full overflow-hidden">
+          <div 
+            className="col-span-9 bg-[#1e1f23] border border-[#3A3B3F] rounded-2xl flex flex-col"
+          >
             <div className="flex justify-end mb-4">
               <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
                 <Settings2 className="h-5 w-5 text-gray-400" />
               </Button>
             </div>
-            <ChatMessage
-              key={sessionId}
-              handleClickAction={handleClickAction}
-              isReplayMode={isReplayMode}
-              messagesEndRef={messagesEndRef}
-              setCurrentQuestion={(value) =>
-                dispatch({ type: "SET_CURRENT_QUESTION", payload: value })
-              }
-              handleKeyDown={handleKeyDown}
-              handleQuestionSubmit={handleQuestionSubmit}
-              handleEnhancePrompt={handleEnhancePrompt}
-              handleCancel={handleCancelQuery}
-              handleEditMessage={handleEditMessage}
-            />
+            <div 
+              className="flex-grow overflow-y-auto"
+              onScroll={handleScroll}
+              ref={chatContainerRef}
+            >
+              <ChatMessage
+                key={sessionId}
+                handleClickAction={handleClickAction}
+                isReplayMode={isReplayMode}
+                messagesEndRef={messagesEndRef}
+                setCurrentQuestion={(value) =>
+                  dispatch({ type: "SET_CURRENT_QUESTION", payload: value })
+                }
+                handleKeyDown={handleKeyDown}
+                handleQuestionSubmit={handleQuestionSubmit}
+                handleEnhancePrompt={handleEnhancePrompt}
+                handleCancel={handleCancelQuery}
+                handleEditMessage={handleEditMessage}
+              />
+            </div>
+            {!autoScroll && (
+              <div className="sticky bottom-4 flex justify-center mt-2">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 bg-[#2a2b30] hover:bg-[#3a3b40]"
+                  onClick={scrollToBottom}
+                >
+                  <ArrowDownToLine className="h-4 w-4" />
+                  回到最新消息
+                </Button>
+              </div>
+            )}
           </div>
-          <div className="col-span-6 bg-[#1e1f23] border border-[#3A3B3F] p-4 rounded-2xl flex flex-col">
+          
+          <div className="col-span-3 bg-[#1e1f23] border border-[#3A3B3F] p-4 rounded-2xl flex flex-col">
             <div className="pb-4 bg-neutral-850 flex items-center justify-between">
               <div className="flex gap-x-4">
                 <Button

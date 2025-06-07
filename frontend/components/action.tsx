@@ -52,10 +52,6 @@ const Action = ({ workspaceInfo, type, value, onClick }: ActionProps) => {
       case TOOL.VISIT:
       case TOOL.BROWSER_USE:
         return <Globe className={className} />;
-      case TOOL.BASH:
-        return <Terminal className={className} />;
-      case TOOL.STR_REPLACE_EDITOR:
-        return <Code className={className} />;
       case TOOL.STATIC_DEPLOY:
         return <Rocket className={className} />;
       case TOOL.PDF_TEXT_EXTRACT:
@@ -117,14 +113,6 @@ const Action = ({ workspaceInfo, type, value, onClick }: ActionProps) => {
       case TOOL.VISIT:
       case TOOL.BROWSER_USE:
         return "Browsing";
-      case TOOL.BASH:
-        return "Executing Command";
-      case TOOL.STR_REPLACE_EDITOR:
-        return value?.tool_input?.command === "create"
-          ? "Creating File"
-          : value?.tool_input?.command === "view"
-          ? "Viewing File"
-          : "Editing File";
       case TOOL.STATIC_DEPLOY:
         return "Deploying";
       case TOOL.PDF_TEXT_EXTRACT:
@@ -184,15 +172,9 @@ const Action = ({ workspaceInfo, type, value, onClick }: ActionProps) => {
       case TOOL.IMAGE_SEARCH:
         return value.tool_input?.query;
       case TOOL.VISIT:
-        return value.tool_input?.url;
+        return value?.tool_input?.url;
       case TOOL.BROWSER_USE:
-        return value.tool_input?.url;
-      case TOOL.BASH:
-        return value.tool_input?.command;
-      case TOOL.STR_REPLACE_EDITOR:
-        return value.tool_input?.path === workspaceInfo
-          ? workspaceInfo
-          : value.tool_input?.path?.replace(workspaceInfo, "");
+        return value?.tool_input?.url;
       case TOOL.STATIC_DEPLOY:
         return value.tool_input?.file_path === workspaceInfo
           ? workspaceInfo

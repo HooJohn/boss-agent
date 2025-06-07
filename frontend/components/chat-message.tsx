@@ -65,7 +65,7 @@ const ChatMessage = ({
       >
         {state.messages.map((message, index) => (
           <motion.div
-            key={message.id}
+            key={`${message.id}-${index}`}
             className={`mb-4 ${
               message.role === "user" ? "text-right" : "text-left"
             } ${message.role === "user" && !message.files && "mb-8"}`}
