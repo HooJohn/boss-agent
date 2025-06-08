@@ -186,6 +186,18 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
                     active_tasks[websocket] = task
 
+                elif msg_type == "enhance_prompt":
+                    text_to_enhance = content.get("text", "")
+                    model_name = content.get("model_name", DEFAULT_MODEL)
+                    client = map_model_name_to_client(model_name, content)
+                    enhanced_prompt = await enhance_user_prompt(text_to_enhance, client)
+                    await websocket.send_json(
+                        RealtimeEvent(
+                            type=EventType.PROMPT_GENERATED,
+                            content={"result": enhanced_prompt},
+                        ).model_dump()
+                    )
+
                 elif msg_type == "cancel":
                     agent = active_agents.get(websocket)
                     if agent:
