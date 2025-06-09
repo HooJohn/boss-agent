@@ -1,3 +1,5 @@
+"use client";
+
 import { Radio, Wifi, WifiOff } from "lucide-react";
 import { useAppContext } from "@/context/app-context";
 import { WebSocketConnectionState } from "@/typings/agent";

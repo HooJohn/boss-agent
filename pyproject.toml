@@ -18,6 +18,7 @@ dependencies = [
     "jsonschema>=4.23.0",
     "mammoth>=1.9.0",
     "markdownify>=1.1.0",
+    "matplotlib>=3.9.2",
     "pandas>=2.2.3",
     "pathvalidate>=3.2.3",
     "pdfminer-six>=20250506",

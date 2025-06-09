@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/providers";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import ConnectionStatus from "@/components/connection-status";
 
 export const metadata: Metadata = {
   title: "Boss-Agent",
@@ -45,6 +46,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <ConnectionStatus />
           </Providers>
         </AppProvider>
       </body>

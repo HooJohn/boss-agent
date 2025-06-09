@@ -6,8 +6,8 @@ from boss_agent.tools.base import LLMTool, ToolImplOutput
 from boss_agent.tools.data_analysis_tool import DataAnalysisTool
 
 class VisualizationTool(LLMTool):
-    name = "create_chart_description"
-    description = "Creates a structured JSON description of a chart to be rendered by the frontend. Use this to visualize data from a dataframe."
+    name = "create_chart"
+    description = "Generates a chart placeholder string to be embedded in a report. The report generator will then replace this placeholder with a real chart."
 
     input_schema = {
         "type": "object",
@@ -67,9 +67,10 @@ class VisualizationTool(LLMTool):
             "y_axis": {"label": y_col, "data": df[y_col].tolist()},
         }
 
-        # The tool output is a special JSON structure that the frontend will intercept
-        # The second argument is a human-readable confirmation message
+        # The tool output is a placeholder string that the report generator will recognize
+        placeholder = f"[CHART:{json.dumps(tool_input)}]"
+        
         return ToolImplOutput(
-            json.dumps({"visualization": chart_data}),
-            f"Chart description created for '{title}'."
+            placeholder,
+            f"Chart placeholder created for '{title}'."
         )

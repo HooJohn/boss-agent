@@ -2,15 +2,16 @@
 
 import os
 import mammoth
-import openpyxl
 import pandas as pd
+import PyPDF2
+import zipfile
 from typing import Any, Optional, List
 from boss_agent.tools.base import LLMTool, ToolImplOutput
 from boss_agent.utils import WorkspaceManager
 
 class ReadFileTool(LLMTool):
     name = "read_file"
-    description = "Reads the entire content of a single specified file from the knowledge base."
+    description = "Reads the entire content of a single specified file from the knowledge base. It can handle various formats including .txt, .csv, .json, .md, .html, .pdf, .docx, and .xlsx. For .xlsx files, it will attempt to read them as CSV if the standard Excel format fails."
 
     input_schema = {
         "type": "object",
@@ -30,20 +31,36 @@ class ReadFileTool(LLMTool):
     def _read_file_content(self, file_path: str) -> str:
         """Read the content of a file, with support for various formats."""
         try:
-            if file_path.endswith(".docx"):
+            if file_path.endswith(".pdf"):
+                with open(file_path, "rb") as pdf_file:
+                    reader = PyPDF2.PdfReader(pdf_file)
+                    content = []
+                    for page in reader.pages:
+                        content.append(page.extract_text())
+                    return "\\n".join(content)
+            elif file_path.endswith(".docx"):
                 with open(file_path, "rb") as docx_file:
                     result = mammoth.convert_to_html(docx_file)
                     return result.value
             elif file_path.endswith(".xlsx"):
-                workbook = openpyxl.load_workbook(file_path)
-                content = []
-                for sheet_name in workbook.sheetnames:
-                    sheet = workbook[sheet_name]
-                    content.append(f"Sheet: {sheet_name}\\n")
-                    for row in sheet.iter_rows(values_only=True):
-                        row_content = [str(cell) if cell is not None else "" for cell in row]
-                        content.append(", ".join(row_content))
-                return "\\n".join(content)
+                try:
+                    # First, try to read as an Excel file
+                    excel_data = pd.read_excel(file_path, sheet_name=None)
+                    content = []
+                    if isinstance(excel_data, dict):
+                        for sheet_name, df in excel_data.items():
+                            content.append(f"Sheet: {sheet_name}\\n")
+                            content.append(df.to_csv(index=False))
+                    else:
+                        content.append(excel_data.to_csv(index=False))
+                    return "\\n".join(content)
+                except (zipfile.BadZipFile, ValueError) as e:
+                    # If reading as Excel fails (e.g., it's actually a CSV), try reading as CSV as a fallback
+                    try:
+                        df = pd.read_csv(file_path)
+                        return df.to_csv(index=False)
+                    except Exception as csv_e:
+                        return f"Error reading file {os.path.basename(file_path)}: Tried as .xlsx and .csv, but failed. Original error: {e}, CSV error: {csv_e}"
             elif file_path.endswith((".txt", ".md", ".html", ".csv", ".json")):
                 with open(file_path, "r", encoding="utf-8") as f:
                     return f.read()

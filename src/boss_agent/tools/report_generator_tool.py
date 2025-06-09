@@ -37,12 +37,25 @@ class ReportGeneratorTool(LLMTool):
                         "x_axis_column": {"type": "string"},
                         "y_axis_column": {"type": "string"},
                         "title": {"type": "string"},
+                        "description": {"type": "string"}, # New field for chart description
                     },
                     "required": ["dataframe_id", "chart_type", "x_axis_column", "y_axis_column", "title"],
                 }
+            },
+            "sections": {
+                "type": "array",
+                "description": "Custom sections to be included in the report.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "content": {"type": "string"},
+                    },
+                    "required": ["title", "content"],
+                }
             }
         },
-        "required": ["title", "summary", "data_table_markdown"],
+        "required": ["title", "summary"],
     }
 
     def __init__(self, client: LLMClient, data_analysis_tool: DataAnalysisTool, visualization_tool: VisualizationTool, **kwargs):
@@ -58,29 +71,33 @@ class ReportGeneratorTool(LLMTool):
     ) -> ToolImplOutput:
         title = tool_input.get("title", "Untitled Report")
         summary = tool_input.get("summary", "")
-        data_table = tool_input.get("data_table_markdown", "")
+        data_table = tool_input.get("data_table_markdown")
         charts_to_generate = tool_input.get("charts", [])
+        custom_sections = tool_input.get("sections", [])
 
-        charts_section = ""
-        for chart_input in charts_to_generate:
-            chart_result = self.visualization_tool.run_impl(chart_input)
-            if chart_result.tool_output:
-                # Format the chart JSON into a markdown code block for the frontend to render
-                charts_section += f"### {chart_input.get('title', 'Chart')}\n"
-                charts_section += f"```json\n{chart_result.tool_output}\n```\n\n"
+        report_parts = [f"# {title}", f"## Executive Summary\n{summary}"]
 
-        # Deterministically assemble the report using an f-string template
-        report = f"""
-# {title}
+        if custom_sections:
+            for section in custom_sections:
+                report_parts.append(f"## {section.get('title', 'Section')}\n{section.get('content', '')}")
 
-## Executive Summary
-{summary}
+        charts_section_parts = []
+        if charts_to_generate:
+            charts_section_parts.append("## Visualizations")
+            for chart_input in charts_to_generate:
+                chart_result = self.visualization_tool.run_impl(chart_input)
+                if chart_result.tool_output:
+                    chart_title = chart_input.get('title', 'Chart')
+                    chart_description = chart_input.get('description', '')
+                    charts_section_parts.append(f"### {chart_title}")
+                    if chart_description:
+                        charts_section_parts.append(chart_description)
+                    charts_section_parts.append(f"```json\n{chart_result.tool_output}\n```")
+            report_parts.append("\n".join(charts_section_parts))
 
-## Visualizations
-{charts_section if charts_section else "No visualizations were generated for this report."}
+        if data_table:
+            report_parts.append(f"## Detailed Data\n{data_table}")
 
-## Detailed Data
-{data_table}
-"""
+        report = "\n\n".join(report_parts)
         
         return ToolImplOutput(report.strip(), "Report assembled successfully.")
