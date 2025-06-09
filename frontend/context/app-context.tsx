@@ -34,6 +34,8 @@ interface AppState {
   wsConnectionState: WebSocketConnectionState;
   socket: WebSocket | null;
   sendMessage: (payload: { type: string; content: any }) => void;
+  agent?: any;
+  currentModel?: string;
 }
 
 // Define action types
@@ -60,6 +62,7 @@ type AppAction =
   | { type: "SET_TOOL_SETTINGS"; payload: AppState["toolSettings"] }
   | { type: "SET_SELECTED_MODEL"; payload: string | undefined }
   | { type: "SET_WS_CONNECTION_STATE"; payload: WebSocketConnectionState }
+  | { type: "SET_AGENT"; payload: any }
   | {
       type: "HANDLE_EVENT";
       payload: {
@@ -94,6 +97,8 @@ const initialState: AppState = {
   selectedModel: AVAILABLE_MODELS[0],
   socket: null,
   sendMessage: () => {},
+  agent: null,
+  currentModel: AVAILABLE_MODELS[0],
 };
 
 // Create the context
@@ -187,6 +192,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, selectedModel: action.payload };
     case "SET_WS_CONNECTION_STATE":
       return { ...state, wsConnectionState: action.payload };
+    case "SET_AGENT":
+      return { ...state, agent: action.payload };
     default:
       return state;
   }

@@ -52,10 +52,15 @@ export default function HomeContent() {
 
   const { deviceId } = useDeviceId();
 
+  const sendFunction = (type: string, content?: Record<string, unknown>) => {
+    sendMessage({ type, content });
+  };
+
   const { sessionId, isLoadingSession, isReplayMode, setSessionId } =
     useSessionManager({
       searchParams,
       handleEvent,
+      send: sendFunction,
     });
 
   const { socket } = state;

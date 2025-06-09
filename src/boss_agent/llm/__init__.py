@@ -1,9 +1,11 @@
 from boss_agent.llm.base import LLMClient
+from typing import Any
+from boss_agent.llm.base import LLMClient
 from boss_agent.llm.openai import OpenAIDirectClient
 from boss_agent.llm.anthropic import AnthropicDirectClient
 from boss_agent.llm.gemini import GeminiDirectClient
 
-def get_client(client_name: str, **kwargs) -> LLMClient:
+def get_client(client_name: str, **kwargs: Any) -> LLMClient:
     """Get a client for a given client name."""
     if client_name == "anthropic-direct":
         return AnthropicDirectClient(**kwargs)

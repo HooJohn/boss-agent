@@ -4,6 +4,8 @@ from boss_agent.llm.base import (
     AssistantContentBlock,
     GeneralContentBlock,
     LLMMessages,
+    DataClassJsonMixin,
+    dataclass,
     TextPrompt,
     TextResult,
     ToolCall,
@@ -12,6 +14,11 @@ from boss_agent.llm.base import (
     ImageBlock,
 )
 from boss_agent.llm.context_manager.base import ContextManager
+
+@dataclass
+class SessionSummary(DataClassJsonMixin):
+    """Internal representation of a summary of the session so far."""
+    text: str
 
 
 class MessageHistory:
@@ -118,9 +125,13 @@ class MessageHistory:
         """Adds a user turn (prompts and/or tool results)."""
         # Ensure all messages are valid user-side types
         for msg in messages:
-            if not isinstance(msg, (TextPrompt, ToolFormattedResult, ImageBlock)):
+            if not isinstance(msg, (TextPrompt, ToolFormattedResult, ImageBlock, SessionSummary)):
                 raise TypeError(f"Invalid message type for user turn: {type(msg)}")
         self._message_lists.append(messages)
+
+    def add_session_summary(self, summary_text: str):
+        """Adds a session summary message."""
+        self.add_user_turn([SessionSummary(text=summary_text)])
 
     def add_assistant_turn(self, messages: list[AssistantContentBlock]):
         """Adds an assistant turn (text response and/or tool calls)."""

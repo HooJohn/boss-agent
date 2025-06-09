@@ -1,4 +1,3 @@
-import os
 import asyncio
 import logging
 from copy import deepcopy
@@ -37,17 +36,23 @@ from boss_agent.tools.browser_tools import (
 from boss_agent.tools.advanced_tools.pdf_tool import PdfTextExtractTool
 from boss_agent.tools.deep_research_tool import DeepResearchTool
 from boss_agent.tools.list_html_links_tool import ListHtmlLinksTool
-from boss_agent.tools.internal_search_tool import InternalSearchTool
+from boss_agent.tools.read_file_tool import ReadFileTool
+from boss_agent.tools.list_files_tool import ListFilesTool
+from boss_agent.tools.content_search_tool import ContentSearchTool
+from boss_agent.tools.data_aggregation_tool import DataAggregationTool
+from boss_agent.tools.extract_info_tool import ExtractInfoTool
+from boss_agent.tools.data_analysis_tool import DataAnalysisTool
+from boss_agent.tools.visualization_tool import VisualizationTool
 from boss_agent.tools.report_generator_tool import ReportGeneratorTool
 
 
 def get_system_tools(
     client: LLMClient,
     workspace_manager: WorkspaceManager,
-    message_queue: asyncio.Queue,
+    message_queue: asyncio.Queue[Any],
     container_id: Optional[str] = None,
     ask_user_permission: bool = False,
-    tool_args: Dict[str, Any] = None,
+    tool_args: Optional[Dict[str, Any]] = None,
 ) -> list[LLMTool]:
     """
     Retrieves a list of all system tools.
@@ -63,11 +68,19 @@ def get_system_tools(
         token_budget=120_000,
     )
 
-    tools = [
+    data_analysis_tool = DataAnalysisTool(workspace_manager=workspace_manager)
+    visualization_tool = VisualizationTool(data_analysis_tool=data_analysis_tool)
+    tools: list[LLMTool] = [
         MessageTool(),
         WebSearchTool(),
-        InternalSearchTool(workspace_manager=workspace_manager),
-        ReportGeneratorTool(workspace_manager=workspace_manager, client=client),
+        ReadFileTool(workspace_manager=workspace_manager),
+        ListFilesTool(workspace_manager=workspace_manager),
+        ContentSearchTool(workspace_manager=workspace_manager),
+        DataAggregationTool(workspace_manager=workspace_manager),
+        ExtractInfoTool(llm=client, workspace_manager=workspace_manager),
+        data_analysis_tool,
+        visualization_tool,
+        ReportGeneratorTool(workspace_manager=workspace_manager, client=client, data_analysis_tool=data_analysis_tool, visualization_tool=visualization_tool),
         VisitWebpageTool(),
         StaticDeployTool(workspace_manager=workspace_manager),
         ListHtmlLinksTool(workspace_manager=workspace_manager),
@@ -150,7 +163,7 @@ class AgentToolManager:
         except StopIteration:
             raise ValueError(f"Tool with name {tool_name} not found")
 
-    def run_tool(self, tool_params: ToolCallParameters, history: MessageHistory):
+    def run_tool(self, tool_params: ToolCallParameters, history: MessageHistory) -> str | list[dict[str, Any]]:
         """
         Executes a llm tool.
 
@@ -181,11 +194,8 @@ class AgentToolManager:
 
         self.logger_for_agent_logs.info(log_message)
 
-        # Handle both ToolResult objects and tuples
-        if isinstance(result, tuple):
-            tool_result, _ = result
-        else:
-            tool_result = result
+        # The result from tool.run() is the tool_output, which is str | list[dict[str, Any]]
+        tool_result: str | list[dict[str, Any]] = result
 
         return tool_result
 

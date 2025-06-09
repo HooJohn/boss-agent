@@ -50,7 +50,7 @@ const QuestionInput = ({
 }: QuestionInputProps) => {
   const { state } = useAppContext();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [searchMode, setSearchMode] = useState("all");
+  const [searchMode, setSearchMode] = useState("internal");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -148,9 +148,9 @@ const QuestionInput = ({
                 <SelectValue placeholder="搜索模式" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">内外网都搜</SelectItem>
                 <SelectItem value="internal">仅内网</SelectItem>
                 <SelectItem value="external">仅外网</SelectItem>
+                <SelectItem value="all">内外网都搜</SelectItem>
               </SelectContent>
             </Select>
             {state.isLoading && handleCancel ? (

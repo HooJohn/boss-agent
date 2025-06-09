@@ -14,7 +14,7 @@ import logging
 import uuid
 import configparser
 from pathlib import Path
-from typing import Dict, List, Set, Any
+from typing import Dict, List, Set, Any, Optional
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -24,19 +24,16 @@ from fastapi import (
     FastAPI,
     WebSocket,
     WebSocketDisconnect,
-    Request,
     HTTPException,
 )
 
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import anyio
-import base64
 from sqlalchemy import asc, text
 
 from boss_agent.core.event import RealtimeEvent, EventType
 from boss_agent.db.models import Event
-from boss_agent.utils.constants import DEFAULT_MODEL, TOKEN_BUDGET, UPLOAD_FOLDER_NAME
+from boss_agent.utils.constants import DEFAULT_MODEL, TOKEN_BUDGET
 from utils import parse_common_args, create_workspace_manager_for_connection
 from boss_agent.agents.anthropic_fc import AnthropicFC
 from boss_agent.agents.base import BaseAgent
@@ -69,12 +66,13 @@ logger.setLevel(logging.INFO)
 
 active_connections: Set[WebSocket] = set()
 active_agents: Dict[WebSocket, BaseAgent] = {}
-active_tasks: Dict[WebSocket, asyncio.Task] = {}
-message_processors: Dict[WebSocket, asyncio.Task] = {}
-global_args = None
+active_tasks: Dict[WebSocket, asyncio.Task[None]] = {}
+message_processors: Dict[WebSocket, asyncio.Task[None]] = {}
+global_args: Optional[argparse.Namespace] = None
 
 
 def map_model_name_to_client(model_name: str, ws_content: Dict[str, Any]) -> LLMClient:
+    assert global_args is not None
     if "claude" in model_name:
         tool_args = ws_content.get("tool_args", {})
         thinking_tokens = tool_args.get("thinking_tokens", False)
@@ -109,6 +107,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     active_connections.add(websocket)
 
+    assert global_args is not None
     config = configparser.ConfigParser()
     config.read('config.ini')
     knowledge_base_path = config.get('knowledge_base', 'path', fallback=global_args.workspace)
@@ -149,8 +148,9 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
                     session_initialized = True
                     active_agents[websocket] = agent
-                    message_processor = agent.start_message_processing()
-                    message_processors[websocket] = message_processor
+                    if isinstance(agent, AnthropicFC):
+                        message_processor = agent.start_message_processing()
+                        message_processors[websocket] = message_processor
                     await websocket.send_json(
                         RealtimeEvent(
                             type=EventType.AGENT_INITIALIZED,
@@ -188,19 +188,20 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 elif msg_type == "enhance_prompt":
                     text_to_enhance = content.get("text", "")
+                    files_to_enhance = content.get("files", [])
                     model_name = content.get("model_name", DEFAULT_MODEL)
                     client = map_model_name_to_client(model_name, content)
-                    enhanced_prompt = await enhance_user_prompt(text_to_enhance, client)
+                    _, _, enhanced_prompt = await enhance_user_prompt(client, text_to_enhance, files_to_enhance)
                     await websocket.send_json(
                         RealtimeEvent(
                             type=EventType.PROMPT_GENERATED,
-                            content={"result": enhanced_prompt},
+                            content={"result": enhanced_prompt or ""},
                         ).model_dump()
                     )
 
                 elif msg_type == "cancel":
                     agent = active_agents.get(websocket)
-                    if agent:
+                    if isinstance(agent, AnthropicFC):
                         agent.cancel()
                         await websocket.send_json(
                             RealtimeEvent(
@@ -233,10 +234,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 async def run_agent_async(
-    websocket: WebSocket, user_input: str, resume: bool = False, files: List[str] = [], search_mode: str = "all", tool_choice: Dict[str, Any] = None
+    websocket: WebSocket, user_input: str, resume: bool = False, files: List[str] = [], search_mode: str = "all", tool_choice: Optional[Dict[str, Any]] = None
 ):
     agent = active_agents.get(websocket)
-    if not agent:
+    if not isinstance(agent, AnthropicFC):
         await websocket.send_json(
             RealtimeEvent(
                 type=EventType.ERROR,
@@ -246,6 +247,8 @@ async def run_agent_async(
         return
 
     try:
+        # The agent object is guaranteed to be of type AnthropicFC here
+        # due to the check at the beginning of the function.
         agent.message_queue.put_nowait(
             RealtimeEvent(type=EventType.USER_MESSAGE, content={"text": user_input})
         )
@@ -272,7 +275,8 @@ def cleanup_connection(websocket: WebSocket):
         active_connections.remove(websocket)
     if websocket in active_agents:
         agent = active_agents[websocket]
-        agent.websocket = None
+        if isinstance(agent, AnthropicFC):
+            agent.websocket = None
         if websocket in message_processors:
             del message_processors[websocket]
     if websocket in active_tasks and not active_tasks[websocket].done():
@@ -290,14 +294,14 @@ def create_agent_for_connection(
     tool_args: Dict[str, Any],
     config: configparser.ConfigParser,
     search_mode: str = "all",
-):
+) -> BaseAgent:
     global global_args
     device_id = websocket.query_params.get("device_id")
     logger_for_agent_logs = logging.getLogger(f"agent_logs_{id(websocket)}")
     logger_for_agent_logs.setLevel(logging.DEBUG)
     logger_for_agent_logs.propagate = False
 
-    if not logger_for_agent_logs.handlers:
+    if not logger_for_agent_logs.handlers and global_args and global_args.logs_path:
         logger_for_agent_logs.addHandler(logging.FileHandler(global_args.logs_path))
         if not global_args.minimize_stdout_logs:
             logger_for_agent_logs.addHandler(logging.StreamHandler())
@@ -320,7 +324,8 @@ def create_agent_for_connection(
         token_budget=TOKEN_BUDGET,
     )
 
-    queue = asyncio.Queue()
+    queue: asyncio.Queue[RealtimeEvent] = asyncio.Queue()
+    assert global_args is not None
     tools = get_system_tools(
         client=client,
         workspace_manager=workspace_manager,
@@ -332,7 +337,10 @@ def create_agent_for_connection(
     if search_mode == "internal":
         tools = [tool for tool in tools if tool.name != "web_search"]
     elif search_mode == "external":
-        tools = [tool for tool in tools if tool.name != "internal_search"]
+        # This mode is not fully supported by the new toolset,
+        # but we can remove the internal-facing tools as a basic implementation.
+        internal_tools = ["list_files", "content_search", "read_file", "data_aggregation"]
+        tools = [tool for tool in tools if tool.name not in internal_tools]
     
     max_turns = config.getint('agent', 'max_turns', fallback=200)
     max_output_tokens = config.getint('agent', 'max_output_tokens_per_turn', fallback=32000)
@@ -354,7 +362,7 @@ def create_agent_for_connection(
     return agent
 
 
-def setup_workspace(app, workspace_path):
+def setup_workspace(app: FastAPI, workspace_path: str):
     try:
         app.mount(
             "/workspace",
@@ -384,7 +392,7 @@ def main():
 
 
 @app.get("/api/sessions/{device_id}")
-async def get_sessions_by_device_id(device_id: str):
+async def get_sessions_by_device_id(device_id: str) -> Dict[str, List[Dict[str, Any]]]:
     try:
         db_manager = DatabaseManager()
         with db_manager.get_session() as session:
@@ -400,16 +408,18 @@ async def get_sessions_by_device_id(device_id: str):
             ORDER BY s.created_at DESC
             """)
             result = session.execute(query, {"device_id": device_id})
-            sessions = []
+            sessions: List[Dict[str, Any]] = []
             for row in result:
-                first_message_payload = json.loads(row.first_message) if row.first_message else {}
+                first_message_payload_str = row.first_message
+                first_message_payload = json.loads(first_message_payload_str) if isinstance(first_message_payload_str, str) else {}
+                
                 from datetime import datetime
                 created_at = row.created_at
                 if isinstance(created_at, str):
                     created_at = datetime.fromisoformat(created_at)
                 
                 sessions.append({
-                    "id": row.session_id,
+                    "id": str(row.session_id),
                     "workspace_dir": row.workspace_dir,
                     "created_at": created_at.isoformat(),
                     "device_id": row.device_id,
@@ -422,17 +432,17 @@ async def get_sessions_by_device_id(device_id: str):
 
 
 @app.get("/api/sessions/{session_id}/events")
-async def get_session_events(session_id: str):
+async def get_session_events(session_id: str) -> Dict[str, List[Dict[str, Any]]]:
     try:
         db_manager = DatabaseManager()
         with db_manager.get_session() as session:
-            events = (
+            events: List[Event] = (
                 session.query(Event)
                 .filter(Event.session_id == session_id)
                 .order_by(asc(Event.timestamp))
                 .all()
             )
-            event_list = [
+            event_list: List[Dict[str, Any]] = [
                 {
                     "id": e.id,
                     "session_id": e.session_id,

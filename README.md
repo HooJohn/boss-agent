@@ -1,328 +1,259 @@
 <div align="center">
   <img src="assets/boss.png" width="200"/>
 
-
-
-
-# Boss Agent
+# Boss Agent: 智能决策与分析AI平台
 
 [![GitHub stars](https://img.shields.io/github/stars/Intelligent-Internet/boss-agent?style=social)](https://github.com/Intelligent-Internet/boss-agent/stargazers)
 [![Discord Follow](https://dcbadge.vercel.app/api/server/yDWPsshPHB?style=flat)](https://discord.gg/yDWPsshPHB)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Blog](https://img.shields.io/badge/Blog-Boss--Agent-blue)](https://boss-agent.com/web/blog/post/boss-agent)
-[![GAIA Benchmark](https://img.shields.io/badge/GAIA-Benchmark-green)](https://boss-agent-gaia.boss-agent.com/)
-[<img src="https://devin.ai/assets/deepwiki-badge.png" alt="Ask DeepWiki.com" height="20"/>](https://deepwiki.com/Intelligent-Internet/boss-agent)
 
 </div>
 
-Boss-Agent is an open-source intelligent assistant designed to streamline and enhance workflows across multiple domains. It represents a significant advancement in how we interact with technology—shifting from passive tools to intelligent systems capable of independently executing complex tasks.
+**Boss-Agent** 是一个开源的、为企业设计的智能决策与分析AI平台。它旨在通过先进的AI Agent技术，将大型语言模型（LLM）的能力与企业内部数据和业务流程深度融合，从而赋能企业，实现数据驱动的智能决策。
 
-### Discord Join US
-
-📢 Join Our [Discord Channel](https://discord.gg/yDWPsshPHB)! Looking forward to seeing you there! 🎉
+与传统的被动式工具不同，Boss-Agent 是一个能够自主理解、规划并执行复杂任务的智能系统，致力于成为企业管理者和员工的得力AI助手。
 
 
-## Introduction
-https://github.com/user-attachments/assets/d0eb7440-a6e2-4276-865c-a1055181bb33
+---
 
+## 核心功能
 
-## Overview
+Boss-Agent 提供了一系列强大的功能，使其能够胜任多种复杂的业务场景：
 
-Boss Agent is built around providing an agentic interface to leading language models. It offers:
+-   **多模态交互**: 支持处理和理解文本、PDF、Word文档等多种格式的信息。
+-   **强大的工具集**:
+    -   **内外网搜索**: 结合Tavily、SerpAPI等工具，实现全面的互联网信息检索与企业内部知识库的精准搜索。
+    -   **浏览器自动化**: 内置基于Playwright的浏览器控制工具，能够自主浏览网页、提取信息、填充表单，完成复杂的在线任务。
+    -   **文件操作**: 支持读、写、修改本地文件，能够生成报告、编写代码、整理数据。
+    -   **代码执行**: 能够在安全的环境中执行Shell命令，完成系统操作和自动化脚本任务。
+-   **ReAct工作流**: 基于“思考-行动”（Reason-Act）的先进Agent工作流，使其能够分解复杂任务、制定执行计划、并根据中间结果进行调整和反思。
+-   **实时交互界面**: 提供基于React和WebSocket的现代化Web界面，用户可以实时观察Agent的思考过程和每一步行动，极大地提升了透明度和信任感。
+-   **可扩展的架构**: 系统设计高度模块化，可以轻松集成不同的LLM（已支持Anthropic Claude, Google Gemini, OpenAI GPT系列）和自定义工具。
+-   **企业知识库**: 能够连接到本地文件系统，构建企业专属知识库，让AI在充分理解企业内部信息的基础上进行决策和分析。
 
-- A CLI interface for direct command-line interaction
-- A WebSocket server that powers a modern React-based frontend
-- Integration with multiple LLM providers:
-  - Anthropic Claude models (direct API or via Google Cloud Vertex AI)
-  - Google Gemini models (direct API or via Google Cloud Vertex AI)
+## 技术架构
 
-## Core Capabilities
+项目采用前后端分离的现代Web架构，确保了系统的灵活性和可扩展性。
 
-Boss-Agent is a versatile open-source assistant built to elevate your productivity across domains:
+-   **后端**: 使用 **Python 3.10+** 和 **FastAPI** 框架构建，通过 **WebSocket** 提供实时通信服务。
+-   **前端**: 使用 **Next.js (React)** 和 **TypeScript** 构建，提供响应式、交互友好的用户界面。
+-   **核心Agent**: 基于 **ReAct** 模式，结合 **LangChain** 和 **LlamaIndex** 的思想，实现了强大的工具调用和任务规划能力。
 
-| Domain | What Boss‑Agent Can Do |
-|--------|----------------------|
-| Research & Fact‑Checking | Multistep web search, source triangulation, structured note‑taking, rapid summarization |
-| Content Generation | Blog & article drafts, lesson plans, creative prose, technical manuals, Website creations |
-| Data Analysis & Visualization | Cleaning, statistics, trend detection, charting, and automated report generation |
-| Software Development | Code synthesis, refactoring, debugging, test‑writing, and step‑by‑step tutorials across multiple languages |
-| Workflow Automation | Script generation, browser automation, file management, process optimization |
-| Problem Solving | Decomposition, alternative‑path exploration, stepwise guidance, troubleshooting |
+### 架构示意图
 
-## Methods
+```mermaid
+graph TD
+    subgraph 前端 (浏览器)
+        A[用户界面 (React/Next.js)] --> B{应用/UI状态 (React Context)};
+        B --> A;
+        A -- 用户操作 --> C[WebSocket通信钩子];
+        C -- 服务端事件 --> B;
+        C -- 发送消息 --> D[后端WebSocket];
+    end
 
-The Boss-Agent system represents a sophisticated approach to building versatile AI agents. Our methodology centers on:
+    subgraph 后端 (服务器)
+        D -- 接收消息 --> E[FastAPI WebSocket服务器];
+        E -- 创建/管理 --> F[Agent核心 (AnthropicFC)];
+        F -- 使用 --> G[工具管理器];
+        G -- 执行 --> H[具体工具 (网页搜索, 浏览器等)];
+        F -- 交互 --> I[LLM客户端 (Anthropic/Gemini/OpenAI)];
+        F -- 推送/接收事件 --> J[内存消息队列];
+        E -- 从队列消费 --> J;
+        J -- 推送事件 --> D;
+        F -- 持久化 --> K[数据库 (SQLite)];
+        E -- 读取 --> K;
+    end
 
-1. **Core Agent Architecture and LLM Interaction**
-   - System prompting with dynamically tailored context
-   - Comprehensive interaction history management
-   - Intelligent context management to handle token limitations
-   - Systematic LLM invocation and capability selection
-   - Iterative refinement through execution cycles
+    I -- API调用 --> L[外部LLM API];
+    H -- 执行动作 --> M[外部世界 (网络, 文件系统)];
 
-2. **Planning and Reflection**
-   - Structured reasoning for complex problem-solving
-   - Problem decomposition and sequential thinking
-   - Transparent decision-making process
-   - Hypothesis formation and testing
-
-3. **Execution Capabilities**
-   - File system operations with intelligent code editing
-   - Command line execution in a secure environment
-   - Advanced web interaction and browser automation
-   - Task finalization and reporting
-   - Specialized capabilities for various modalities (Experimental) (PDF, audio, image, video, slides)
-   - Deep research integration
-
-4. **Context Management**
-   - Token usage estimation and optimization
-   - Strategic truncation for lengthy interactions
-   - File-based archival for large outputs
-
-5. **Real-time Communication**
-   - WebSocket-based interface for interactive use
-   - Isolated agent instances per client
-   - Streaming operational events for responsive UX
-
-## GAIA Benchmark Evaluation
-
-Boss-Agent has been evaluated on the GAIA benchmark, which assesses LLM-based agents operating within realistic scenarios across multiple dimensions including multimodal processing, tool utilization, and web searching.
-
-We identified several issues with the GAIA benchmark during our evaluation:
-
-- **Annotation Errors**: Several incorrect annotations in the dataset (e.g., misinterpreting date ranges, calculation errors)
-- **Outdated Information**: Some questions reference websites or content no longer accessible
-- **Language Ambiguity**: Unclear phrasing leading to different interpretations of questions
-
-Despite these challenges, Boss-Agent demonstrated strong performance on the benchmark, particularly in areas requiring complex reasoning, tool use, and multi-step planning.
-
-![GAIA Benchmark](assets/gaia.jpg)
-You can view the full traces of some samples here: [GAIA Benchmark Traces](https://boss-agent-gaia.boss-agent.com/)
-
-## Requirements
-- Docker Compose
-- Python 3.10+
-- Node.js 18+ (for frontend)
-- At least one of the following:
-  - Anthropic API key, or
-  - Google Gemini API key, or  
-  - Google Cloud project with Vertex AI API enabled
-
-## Best Practices:
-- For best performance, we recommend using Claude 4.0 Sonnet or Claude Opus 4.0 models.
-- For fast and cheap, we recommend using GPT4.1 from OpenAI.
-- Gemini 2.5 Pro is a good balance between performance and cost.
-
-## Knowledge Base Setup (Important)
-
-Boss-Agent is designed to work with a structured "Knowledge Base" on your local file system. This allows it to securely access and reason about your company's internal data.
-
-### 1. Directory Structure
-
-We recommend organizing your knowledge base by department and business function. This structure helps Boss-Agent to understand the context of your data and perform more accurate searches. Here is an example structure:
-
-```
-/path/to/your/knowledge_base/
-├── finance/
-│   ├── financial_reports/
-│   ├── expense_reports/
-│   └── invoices/
-├── human_resources/
-│   ├── employee_data/
-│   └── performance_reviews/
-├── sales/
-│   ├── weekly_reports/
-│   └── customer_feedback/
-└── marketing/
-    └── ...
+    style A fill:#cde4ff
+    style E fill:#d5f0d5
 ```
 
-### 2. File Naming Convention
+## 安装与启动
 
-A consistent file naming convention is crucial for time-based queries and reports. We recommend the following format:
+我们推荐使用 Docker 进行一键部署，同时也提供完整的手动安装步骤。
 
-`[YYYY-MM-DD]_[Theme]_[Optional-Description].[ext]`
+### 1. 环境准备
 
-**Examples:**
-- `2024-Q2_income-statement.pdf`
-- `2023_annual-report.txt`
-- `2024-W26_sales-summary.html`
+-   安装 [Docker](https://www.docker.com/) 和 Docker Compose。
+-   安装 [Python 3.10+](https://www.python.org/)。
+-   安装 [Node.js 18+](https://nodejs.org/) 和 npm。
+-   准备至少一个LLM的API Key（Anthropic, Google Gemini, 或 OpenAI）。
+-   准备一个搜索服务的API Key（推荐 [Tavily](https://tavily.com/)）。
 
-### 3. Supported File Formats
+### 2. 配置
 
-- **Directly Supported (Text-based):** `.txt`, `.md`, `.html`, `.csv`, `.json`
-- **Automatic Text Extraction:** `.pdf`, `.docx`
-- **Other Formats:** For other formats like Excel (`.xlsx`), we recommend exporting the data to a supported format (e.g., `.csv`) before placing it in the knowledge base.
+项目需要两个 `.env` 文件来分别配置前端和后端。
 
-### 4. Configuration
+#### a. 后端配置
 
-You must specify the path to your knowledge base in the `config.ini` file located in the root of the project.
-
-```ini
-[knowledge_base]
-path = /path/to/your/knowledge_base
-```
-
-## Environment
-
-You need to set up 2 `.env` files to run both frontend and backend
-**Shortcut:** Check file `.env.example` for example of `.env` file.
-
-### Frontend Environment Variables
-
-For the frontend, create a `.env` file in the frontend directory, point to the port of your backend:
+在项目的**根目录**下，复制 `.env.example` 并重命名为 `.env`。
 
 ```bash
+# .env 文件
+
+# 静态文件基础URL (用于访问工作区文件)
+STATIC_FILE_BASE_URL=http://localhost:8000/
+
+# LLM API Keys (至少选择一个)
+ANTHROPIC_API_KEY=sk-ant-xxxxxxxx
+GEMINI_API_KEY=xxxxxxxx
+OPENAI_API_KEY=sk-xxxxxxxx
+
+# 搜索服务 API Key (必需)
+TAVILY_API_KEY=tvly-xxxxxxxx
+
+# 其他可选的高级服务API Keys
+# JINA_API_KEY=...
+# FIRECRAWL_API_KEY=...
+# SERPAPI_API_KEY=...
+```
+
+#### b. 前端配置
+
+在 `frontend/` 目录下，创建一个 `.env` 文件。
+
+```bash
+# frontend/.env 文件
+
+# 指向你的后端服务地址
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-### Backend Environment Variables
+#### c. 知识库与Agent配置
 
-For the backend, create a `.env` file in the root directory with the following variables. Here are the required variables needed to run this project:
+在项目**根目录**下，编辑 `config.ini` 文件。
 
+```ini
+[knowledge_base]
+# 指定你的企业知识库的本地路径
+path = /path/to/your/knowledge_base
+
+[agent]
+# Agent执行任务的最大循环次数
+max_turns = 200
+# Agent每次调用LLM时生成的最大token数
+max_output_tokens_per_turn = 32000
+```
+
+### 3. 启动项目
+
+#### a. Docker 启动 (推荐)
+
+这是最简单、最稳定的启动方式。
 
 ```bash
-# Required API Keys - Choose one based on your LLM provider:
-# Option 1: For Claude models via Anthropic
-ANTHROPIC_API_KEY=your_anthropic_key
-
-# Option 2: For Gemini models via Google
-GEMINI_API_KEY=your_gemini_key
-
-# Option 3: For OpenAI models
-OPENAI_API_KEY=your_openai_key
-
-# Search Provider API Key
-TAVILY_API_KEY=your_tavily_key
-
-STATIC_FILE_BASE_URL=http://localhost:8000/
-```
-
-We also support other search and crawl provider such as FireCrawl and SerpAPI (Optional but yield better performance):
-```bash
-JINA_API_KEY=your_jina_key
-FIRECRAWL_API_KEY=your_firecrawl_key
-SERPAPI_API_KEY=your_serpapi_key 
-```
-
-We are supporting image generation and video generation tool by Vertex AI (Optional, good for more creative output), to use this, you need to set up the following variables:
-```bash
-MEDIA_GCS_OUTPUT_BUCKET=gs://your_bucket_here
-MEDIA_GCP_PROJECT_ID=your_vertex_project_id
-MEDIA_GCP_LOCATION=your_vertex_location
-```
-
-Image Search Tool  (Optional, good for more beautiful output)
-```
-SERPAPI_API_KEY=your_serpapi_key 
-```
-
-
-## Installation
-
-### Docker Installation (Recommended)
-
-1. Clone the repository
-2. Set up the 2 environment files as mentioned in the above step
-3. If you are using Anthropic Client run
-```
+# 赋予启动/停止脚本执行权限
 chmod +x start.sh stop.sh
-./start.sh 
-```
-If you are using Vertex, run with these variables
-```
-GOOGLE_APPLICATION_CREDENTIALS=absolute-path-to-credential \
-PROJECT_ID=project-id \
-REGION=region \
+
+# 启动服务
 ./start.sh
-```
-*Note: Due to a bug in the latest docker, if you receive and error, try running with `--force-recreate`. For example `./start.sh --force-recreate `*
 
-After running start.sh, you can check your application at: localhost:3000
-
-Run `./stop.sh` to tear down the service.
-
-### Manual Installation
-1. Clone the repository
-2. Set up Python environment:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   pip install -e .
-   ```
-
-3. Set up frontend (optional):
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-### Command Line Interface
-
-If you want to use anthropic client, set `ANTHROPIC_API_KEY` in `.env` file and run:
-```bash
-python cli.py 
+# 如果遇到Docker相关的错误，可以尝试强制重新创建容器
+# ./start.sh --force-recreate
 ```
 
-If you want to use vertex, set `GOOGLE_APPLICATION_CREDENTIALS` and run:
+服务启动后，通过浏览器访问 `http://localhost:3000` 即可使用。
+
+要停止服务，运行 `./stop.sh`。
+
+#### b. 手动启动 (用于开发)
+
+如果你想对代码进行修改和调试，可以选择手动启动。
+
+**启动后端:**
+
 ```bash
-GOOGLE_APPLICATION_CREDENTIALS=path-to-your-credential
-python cli.py --project-id YOUR_PROJECT_ID --region YOUR_REGION
-```
+# 1. (可选) 创建并激活Python虚拟环境
+python -m venv .venv
+source .venv/bin/activate  # 在 Windows 上: .venv\Scripts\activate
 
-Options:
-- `--project-id`: Google Cloud project ID
-- `--region`: Google Cloud region (e.g., us-east5)
-- `--workspace`: Path to the workspace directory (default: ./workspace)
-- `--needs-permission`: Require permission before executing commands
-- `--minimize-stdout-logs`: Reduce the amount of logs printed to stdout
+# 2. 安装依赖
+pip install -e .
 
-### Web Interface
-
-1. Start the WebSocket server:
-
-When using Anthropic client:
-```bash
+# 3. 启动WebSocket服务器
 python ws_server.py --port 8000
 ```
 
-When using Vertex:
-```bash
-GOOGLE_APPLICATION_CREDENTIALS=path-to-your-credential \
-python ws_server.py --port 8000 --project-id YOUR_PROJECT_ID --region YOUR_REGION
-```
+**启动前端:**
 
-2. Start the frontend (in a separate terminal):
+打开**新的**终端窗口。
 
 ```bash
+# 1. 进入前端目录
 cd frontend
+
+# 2. 安装依赖
+npm install
+
+# 3. 启动开发服务器
 npm run dev
 ```
 
-3. Open your browser to http://localhost:3000
+服务启动后，通过浏览器访问 `http://localhost:3000`。
 
-## Project Structure
+## 测试指南
 
-- `cli.py`: Command-line interface
-- `ws_server.py`: WebSocket server for the frontend
-- `src/boss_agent/`: Core agent implementation
-  - `agents/`: Agent implementations
-  - `llm/`: LLM client interfaces
-  - `tools/`: Tool implementations
-  - `utils/`: Utility functions
+为确保代码质量和功能稳定性，我们使用 `pytest` 作为后端的测试框架。
 
-## Conclusion
+### 运行现有测试
 
-The Boss-Agent framework, architected around the reasoning capabilities of large language models like Claude 4.0 Sonnet or Gemini 2.5 Pro, presents a comprehensive and robust methodology for building versatile AI agents. Through its synergistic combination of a powerful LLM, a rich set of execution capabilities, an explicit mechanism for planning and reflection, and intelligent context management strategies, Boss-Agent is well-equipped to address a wide spectrum of complex, multi-step tasks. Its open-source nature and extensible design provide a strong foundation for continued research and development in the rapidly evolving field of agentic AI.
+在项目根目录下，激活Python虚拟环境后，直接运行：
 
-## Acknowledgement
+```bash
+pytest
+```
 
-We would like to express our sincere gratitude to the following projects and individuals for their invaluable contributions that have helped shape this project:
+`pytest` 会自动发现并执行 `tests/` 目录下的所有测试用例。
 
-- **AugmentCode**: We have incorporated and adapted several key components from the [AugmentCode project](https://github.com/augmentcode/augment-swebench-agent). AugmentCode focuses on SWE-bench, a benchmark that tests AI systems on real-world software engineering tasks from GitHub issues in popular open-source projects. Their system provides tools for bash command execution, file operations, and sequential problem-solving capabilities designed specifically for software engineering tasks.
+### 当前测试覆盖
 
-- **Manus**: Our system prompt architecture draws inspiration from Manus's work, which has helped us create more effective and contextually aware AI interactions.
+项目目前包含以下几个方面的单元测试：
 
-- **Index Browser Use**: We have built upon and extended the functionality of the [Index Browser Use project](https://github.com/lmnr-ai/index/tree/main), particularly in our web interaction and browsing capabilities. Their foundational work has enabled us to create more sophisticated web-based agent behaviors.
+-   **消息历史**: `tests/test_message_history.py`
+-   **核心工具**:
+    -   Bash命令执行: `tests/tools/test_bash_tool.py`
+    -   序列化思考: `tests/tools/test_sequential_thinking_tool.py`
+    -   字符串替换: `tests/tools/test_str_replace_tool.py`
+-   **LLM模块**:
+    -   上下文摘要: `tests/llm/context_manager/test_llm_summarizing.py`
 
-We are committed to open source collaboration and believe in acknowledging the work that has helped us build this project. If you feel your work has been used in this project but hasn't been properly acknowledged, please reach out to us.
+### 编写新测试
+
+当您为项目添加新功能（尤其是新的工具）时，请务必为其编写配套的测试用例。
+
+1.  在 `tests/` 目录下，参照现有结构创建新的测试文件，文件名以 `test_` 开头。
+2.  在文件中，使用标准的 `pytest` 语法编写断言和测试函数。
+
+**前端测试**:
+前端目前暂未配置测试脚本。未来的工作可以考虑引入 [Jest](https://jestjs.io/) 和 [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) 来进行单元测试和组件测试。
+
+## 项目结构概览
+
+```
+.
+├── config.ini              # Agent和知识库配置文件
+├── README.md               # 本文档
+├── start.sh                # Docker启动脚本
+├── ws_server.py            # 后端WebSocket服务器主入口
+├── pyproject.toml          # 后端项目与依赖配置
+├── frontend/
+│   ├── package.json        # 前端项目与依赖配置
+│   ├── next.config.ts      # Next.js 配置文件
+│   ├── app/                # Next.js App Router 核心目录
+│   │   ├── layout.tsx      # 全局布局
+│   │   └── page.tsx        # 主页面入口
+│   ├── components/         # React UI组件
+│   │   ├── home-content.tsx # 主界面核心组件
+│   │   └── ...
+│   ├── context/
+│   │   └── app-context.tsx # 全局状态管理
+│   └── hooks/              # 自定义React Hooks
+└── src/
+    └── boss_agent/         # 后端核心代码
+        ├── agents/         # Agent实现
+        ├── llm/            # LLM客户端封装
+        ├── tools/          # 所有可用工具的实现
+        └── ...

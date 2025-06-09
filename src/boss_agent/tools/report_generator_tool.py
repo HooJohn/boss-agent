@@ -1,21 +1,23 @@
 """Tool for generating reports based on internal knowledge base."""
-
 import os
-from typing import Any, Optional, List
+from typing import Any, Optional
 from boss_agent.tools.base import LLMTool, ToolImplOutput
-from boss_agent.utils import WorkspaceManager
-from boss_agent.llm.base import LLMClient
+from boss_agent.utils.workspace_manager import WorkspaceManager
+from boss_agent.llm.base import LLMClient, TextPrompt, TextResult
+from boss_agent.llm.message_history import MessageHistory
+from boss_agent.tools.data_analysis_tool import DataAnalysisTool
+from boss_agent.tools.visualization_tool import VisualizationTool
 
 class ReportGeneratorTool(LLMTool):
-    name = "generate_report"
-    description = "Generates a report based on a specified type and time dimension by searching the internal knowledge base."
+    name = "report_generator"
+    description = "Generates a professional, structured report based on a user's query and provided data."
 
     input_schema = {
         "type": "object",
         "properties": {
             "report_type": {
                 "type": "string",
-                "description": "The type of report to generate (e.g., 'income_statement', 'sales_summary').",
+                "description": "The type of report to generate (e.g., 'balance_sheet', 'income_statement').",
             },
             "time_dimension": {
                 "type": "string",
@@ -23,75 +25,125 @@ class ReportGeneratorTool(LLMTool):
             },
             "department": {
                 "type": "string",
-                "description": "The department to generate the report for (e.g., 'finance', 'sales').",
-            }
+                "description": "The department for which the report is generated (e.g., 'finance', 'hr').",
+            },
         },
         "required": ["report_type", "time_dimension", "department"],
     }
 
-    def __init__(self, workspace_manager: WorkspaceManager, client: LLMClient):
+    def __init__(self, workspace_manager: WorkspaceManager, client: LLMClient, data_analysis_tool: DataAnalysisTool, visualization_tool: VisualizationTool):
         super().__init__()
         self.workspace_manager = workspace_manager
         self.client = client
-
-    def _find_relevant_files(self, department: str, time_dimension: str, report_type: str) -> List[str]:
-        """Find files in the knowledge base that match the criteria."""
-        search_path = os.path.join(self.workspace_manager.root, department)
-        if not os.path.isdir(search_path):
-            return []
-
-        found_files = []
-        for root, _, files in os.walk(search_path):
-            for file in files:
-                # A simple matching logic based on file naming convention
-                if time_dimension in file and report_type.replace('_', '-') in file:
-                    found_files.append(os.path.join(root, file))
-        return found_files
-
-    def _read_file_content(self, file_path: str) -> str:
-        """Reads the content of a file."""
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                return f.read()
-        except Exception as e:
-            return f"Error reading file {file_path}: {e}"
+        self.data_analysis_tool = data_analysis_tool
+        self.visualization_tool = visualization_tool
 
     def run_impl(
         self,
         tool_input: dict[str, Any],
-        message_history: Optional[List[dict]] = None,
+        message_history: Optional[MessageHistory] = None,
     ) -> ToolImplOutput:
         report_type = tool_input.get("report_type")
         time_dimension = tool_input.get("time_dimension")
         department = tool_input.get("department")
 
-        relevant_files = self._find_relevant_files(department, time_dimension, report_type)
+        # Construct the file path based on the input
+        # This is a simplified example. You might need a more robust way to map these inputs to file paths.
+        file_name_map = {
+            "balance_sheet": "通用账本交易明细",
+            "income_statement": "通用账本交易明细",
+            "cash_flow_statement": "通用账本交易明细",
+        }
+        file_name_prefix = file_name_map.get(str(report_type), "通用账本交易明细")
+        
+        # Simplified time mapping. You might need more complex logic.
+        year = str(time_dimension).split('-')[0]
+        file_path = os.path.join(str(self.workspace_manager.root), 'knowledge_base', str(department))
 
-        if not relevant_files:
-            return ToolImplOutput(f"No data found for {department} {report_type} in {time_dimension}.", "Report generation failed.")
+        # Find the relevant file
+        target_file = None
+        for root, _, files in os.walk(file_path):
+            for file in files:
+                if file_name_prefix in file and year in file:
+                    target_file = os.path.join(root, file)
+                    break
+            if target_file:
+                break
 
-        # For simplicity, we'll use the content of the first found file.
-        # A more advanced implementation would aggregate data from all found files.
-        file_content = self._read_file_content(relevant_files[0])
+        if not target_file:
+            return ToolImplOutput("", f"Error: Data file not found for the given criteria.")
 
-        # A simple prompt template. This would be more sophisticated in a real application.
+        # Load the data using the data analysis tool
+        load_input = {"sub_tool": "load_data", "file_path": target_file}
+        load_result = self.data_analysis_tool.run_impl(load_input)
+        
+        tool_output = load_result.tool_output
+        if not tool_output or "Successfully loaded" not in str(tool_output):
+            return ToolImplOutput("", f"Error: Failed to load data from {target_file}.")
+
+        # Extract dataframe_id from the output string
+        try:
+            df_id = str(tool_output).split("ID: ")[1].split('.')[0]
+        except IndexError:
+            return ToolImplOutput("", f"Error: Could not extract dataframe_id from tool output: {tool_output}")
+        
+        df = self.data_analysis_tool.loaded_dataframes[df_id]
+        data_table = df.head().to_markdown(index=False) # Show a preview
+
+        # Generate a chart
+        chart_input = {
+            "dataframe_id": df_id,
+            "chart_type": "bar",
+            "x_axis_column": df.columns[0],
+            "y_axis_column": df.columns[1],
+            "title": f"{report_type} for {time_dimension}",
+        }
+        chart_result = self.visualization_tool.run_impl(chart_input)
+        charts_section = ""
+        if chart_result.tool_output:
+            charts_section = str(chart_result.tool_output)
+
+
+        # For this example, we'll just generate a simple summary.
+        # In a real scenario, you would perform more complex analysis here.
+        summary_points = [
+            f"This report is a {report_type} for the period {time_dimension}.",
+            "The data has been successfully loaded and is ready for analysis.",
+            "Below is a preview of the data.",
+        ]
+        summary_text = "\n".join(f"- {point}" for point in summary_points)
+
         prompt = f"""
-        Based on the following data, generate a {report_type.replace('_', ' ')} for {time_dimension}.
-        The report should be well-structured, with a title, a summary, and a data table.
+        Based on the user's query and the following data, generate a professional, well-structured report in Markdown format.
 
-        Data:
-        ---
-        {file_content}
-        ---
+        User's Query: Generate a {report_type} for {time_dimension}
+
+        Key Findings:
+        {summary_text}
+
+        Visualizations:
+        {charts_section}
+
+        Detailed Data Preview:
+        {data_table}
+
+        The report must include:
+        1. A clear title.
+        2. An executive summary of the key findings.
+        3. Any generated charts.
+        4. The detailed data preview presented in a Markdown table.
         """
 
-        # Call the LLM to generate the report
         try:
-            response = self.client.chat_completion(
-                messages=[{"role": "user", "content": prompt}],
-                model="claude-3-7-sonnet@20250219", # Or any other suitable model
+            response_blocks, _ = self.client.generate(
+                messages=[[TextPrompt(text=prompt)]],
+                max_tokens=4096,
             )
-            report = response.completion
+            report = ""
+            for block in response_blocks:
+                if isinstance(block, TextResult):
+                    report = block.text
+                    break
             return ToolImplOutput(report, "Report generated successfully.")
         except Exception as e:
             return ToolImplOutput("", f"Failed to generate report from LLM: {e}")

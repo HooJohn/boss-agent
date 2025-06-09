@@ -6,12 +6,14 @@ import { useAppContext } from "@/context/app-context";
 export function useSessionManager({
   searchParams,
   handleEvent,
+  send,
 }: {
   searchParams: URLSearchParams;
   handleEvent: (
-    data: { id: string; type: AgentEvent; content: Record<string, unknown> },
+    data: { id:string; type: AgentEvent; content: Record<string, unknown> },
     workspacePath?: string
   ) => void;
+  send: (type: string, content?: Record<string, unknown>) => void;
 }) {
   const { dispatch } = useAppContext();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -61,7 +63,13 @@ export function useSessionManager({
         };
 
         // Start processing events with delay
-        processEventsWithDelay();
+        await processEventsWithDelay();
+        send("init_agent", {
+          model_name: "claude-3-opus-20240229",
+          tool_args: {
+            "sequential_thinking": true,
+          }
+        });
 
         // Set the reconstructed messages
         if (reconstructedMessages.length > 0) {

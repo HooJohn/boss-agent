@@ -16,6 +16,7 @@ from boss_agent.llm.base import (
     ToolFormattedResult,
     ImageBlock,
 )
+from boss_agent.llm.message_history import SessionSummary
 
 def generate_tool_call_id() -> str:
     """Generate a unique ID for a tool call.
@@ -57,50 +58,74 @@ class GeminiDirectClient(LLMClient):
     ) -> Tuple[list[AssistantContentBlock], dict[str, Any]]:
         
         gemini_messages = []
-        for idx, message_list in enumerate(messages):
-            role = "user" if idx % 2 == 0 else "model"
-            message_content_list = []
+        
+        # This new loop will create valid Gemini turns from the flat message list.
+        for message_list in messages:
+            # A single message_list can contain a sequence of turns for Gemini
+            # e.g. a model turn with a tool call, and a user turn with a tool response.
+            
+            model_turn_parts = []
+            user_turn_parts = []
+
             for message in message_list:
-                if isinstance(message, TextPrompt):
-                    message_content = types.Part(text=message.text)
-                elif isinstance(message, ImageBlock):
-                    message_content = types.Part.from_bytes(
+                if isinstance(message, (TextPrompt, ImageBlock)):
+                    # This starts a new user turn if the previous turn was from the model.
+                    if model_turn_parts:
+                        gemini_messages.append(types.Content(role='model', parts=model_turn_parts))
+                        model_turn_parts = []
+                    
+                    if isinstance(message, TextPrompt):
+                        user_turn_parts.append(types.Part(text=message.text))
+                    else: # ImageBlock
+                        user_turn_parts.append(types.Part.from_bytes(
                             data=message.source["data"],
                             mime_type=message.source["media_type"],
-                        )
-                elif isinstance(message, TextResult):
-                    message_content = types.Part(text=message.text)
-                elif isinstance(message, ToolCall):
-                    message_content = types.Part.from_function_call(
-                        name=message.tool_name,
-                        args=message.tool_input,
-                    )
+                        ))
+
+                elif isinstance(message, (TextResult, ToolCall)):
+                     # This starts a new model turn if the previous turn was from the user.
+                    if user_turn_parts:
+                        gemini_messages.append(types.Content(role='user', parts=user_turn_parts))
+                        user_turn_parts = []
+                    
+                    if isinstance(message, TextResult):
+                        model_turn_parts.append(types.Part(text=message.text))
+                    else: # ToolCall
+                        model_turn_parts.append(types.Part.from_function_call(
+                            name=message.tool_name,
+                            args=message.tool_input,
+                        ))
+
                 elif isinstance(message, ToolFormattedResult):
+                    # A tool response always follows a model turn. Finalize the model turn.
+                    if model_turn_parts:
+                        gemini_messages.append(types.Content(role='model', parts=model_turn_parts))
+                        model_turn_parts = []
+                    
+                    response_part = None
                     if isinstance(message.tool_output, str):
-                        message_content = types.Part.from_function_response(
+                        response_part = types.Part.from_function_response(
                             name=message.tool_name,
                             response={"result": message.tool_output}
                         )
-                    # Handle tool return images. See: https://discuss.ai.google.dev/t/returning-images-from-function-calls/3166/6
                     elif isinstance(message.tool_output, list):
-                        message_content = []
-                        for item in message.tool_output:
-                            if item['type'] == 'text':
-                                message_content.append(types.Part(text=item['text']))
-                            elif item['type'] == 'image':
-                                message_content.append(types.Part.from_bytes(
-                                    data=item['source']['data'],
-                                    mime_type=item['source']['media_type']
-                                ))
+                        response_part = types.Part.from_function_response(
+                            name=message.tool_name,
+                            response={"result": message.tool_output}
+                        )
+                    if response_part:
+                        user_turn_parts.append(response_part)
+
+                elif isinstance(message, SessionSummary):
+                    continue
                 else:
                     raise ValueError(f"Unknown message type: {type(message)}")
-                
-                if isinstance(message_content, list):
-                    message_content_list.extend(message_content)
-                else:
-                    message_content_list.append(message_content)
-            
-            gemini_messages.append(types.Content(role=role, parts=message_content_list))
+
+            # Append any remaining parts at the end of the message list
+            if model_turn_parts:
+                gemini_messages.append(types.Content(role='model', parts=model_turn_parts))
+            if user_turn_parts:
+                gemini_messages.append(types.Content(role='user', parts=user_turn_parts))
         
         tool_declarations = [
             {
@@ -119,6 +144,8 @@ class GeminiDirectClient(LLMClient):
             mode = 'ANY'
         elif tool_choice['type'] == 'auto':
             mode = 'AUTO'
+        elif tool_choice['type'] == 'tool':
+            mode = tool_choice
         else:
             raise ValueError(f"Unknown tool_choice type for Gemini: {tool_choice['type']}")
 

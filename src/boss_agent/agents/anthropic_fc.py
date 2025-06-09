@@ -8,7 +8,7 @@ from typing import List
 from fastapi import WebSocket
 from boss_agent.agents.base import BaseAgent
 from boss_agent.core.event import EventType, RealtimeEvent
-from boss_agent.llm.base import LLMClient, TextResult, ToolCallParameters
+from boss_agent.llm.base import LLMClient, TextResult, ToolCallParameters, TextPrompt
 from boss_agent.llm.context_manager.base import ContextManager
 from boss_agent.llm.message_history import MessageHistory
 from boss_agent.tools.base import ToolImplOutput, LLMTool
@@ -227,17 +227,9 @@ try breaking down the task into smaller steps. After call this tool to update or
             pending_tool_calls = self.history.get_pending_tool_calls()
 
             if len(pending_tool_calls) == 0:
-                self.logger_for_agent_logs.info("[no tools were called]")
-                self.message_queue.put_nowait(
-                    RealtimeEvent(
-                        type=EventType.AGENT_RESPONSE,
-                        content={"text": "Task completed"},
-                    )
-                )
-                return ToolImplOutput(
-                    tool_output=self.history.get_last_assistant_text_response(),
-                    tool_result_message="Task completed",
-                )
+                self.logger_for_agent_logs.info("[no tools were called, forcing tool use]")
+                self.history.add_user_prompt("You must use a tool to answer the question.")
+                continue
 
             if len(pending_tool_calls) > 1:
                 raise ValueError("Only one tool call per turn is supported")
@@ -276,6 +268,16 @@ try breaking down the task into smaller steps. After call this tool to update or
             tool_result = self.tool_manager.run_tool(tool_call, self.history)
 
             self.add_tool_call_result(tool_call, tool_result)
+
+            # --- Add Session Summary ---
+            summary_prompt = f"Based on the result of the tool call '{tool_call.tool_name}' which returned '{str(tool_result)[:200]}...', what is the single most important new piece of information or confirmation you have learned? State it as a brief, factual summary."
+            summary_response = self.client.generate(
+                messages=[[TextPrompt(text=summary_prompt)]],
+                max_tokens=100,
+            )
+            if isinstance(summary_response, tuple) and len(summary_response[0]) > 0:
+                summary_text = summary_response[0][0].text
+                self.history.add_session_summary(f"Summary of last action: {summary_text}")
             if self.tool_manager.should_stop():
                 self.add_fake_assistant_turn(self.tool_manager.get_final_answer())
                 return ToolImplOutput(
@@ -301,7 +303,7 @@ try breaking down the task into smaller steps. After call this tool to update or
         resume: bool = False,
         tool_choice: Optional[Dict[str, Any]] = None,
         orientation_instruction: str | None = None,
-    ) -> str:
+    ) -> ToolImplOutput:
         """Start a new agent run."""
         self.tool_manager.reset()
         if not resume:
@@ -314,7 +316,8 @@ try breaking down the task into smaller steps. After call this tool to update or
         }
         if orientation_instruction:
             tool_input["orientation_instruction"] = orientation_instruction
-        return self.run(tool_input, self.history)
+        result = self.run_impl(tool_input, self.history, tool_choice=tool_choice)
+        return result
 
     def clear(self):
         """Clear the dialog and reset interruption state."""

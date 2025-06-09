@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import uuid
 from pathlib import Path
+from typing import Optional
 from boss_agent.utils import WorkspaceManager
 from boss_agent.utils.constants import DEFAULT_MODEL
 
@@ -100,7 +101,7 @@ def parse_common_args(parser: ArgumentParser):
 from datetime import datetime
 
 def create_workspace_manager_for_connection(
-    workspace_root: str, use_container_workspace: bool = False
+    workspace_root: str, use_container_workspace: Optional[str] = None
 ):
     """Create a new workspace manager instance for a websocket connection."""
     # Create unique subdirectory for this connection in a 'sessions' folder
@@ -109,17 +110,19 @@ def create_workspace_manager_for_connection(
     sessions_path = knowledge_base_path.parent / "sessions"
     
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    connection_id = f"{timestamp}-{str(uuid.uuid4())}"
+    session_uuid = uuid.uuid4()
+    connection_id = f"{timestamp}-{str(session_uuid)}"
     
     connection_workspace = sessions_path / connection_id
     connection_workspace.mkdir(parents=True, exist_ok=True)
 
     # Initialize workspace manager with the knowledge base as the root,
     # but with a specific session workspace for writes.
+    container_workspace_path = Path(use_container_workspace) if use_container_workspace else None
     workspace_manager = WorkspaceManager(
         root=knowledge_base_path,
         session_workspace=connection_workspace,
-        container_workspace=use_container_workspace,
+        container_workspace=container_workspace_path,
     )
 
-    return workspace_manager, connection_id
+    return workspace_manager, session_uuid
