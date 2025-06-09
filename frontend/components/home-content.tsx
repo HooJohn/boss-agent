@@ -280,7 +280,7 @@ export default function HomeContent() {
       ) : (
         <div className="w-full grid grid-cols-12 gap-4 flex-1 h-full overflow-hidden">
           <div 
-            className="col-span-9 bg-[#1e1f23] border border-[#3A3B3F] rounded-2xl flex flex-col"
+            className="col-span-12 bg-[#1e1f23] border border-[#3A3B3F] rounded-2xl flex flex-col"
           >
             <div className="flex justify-between items-center mb-4">
               <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(true)}>
@@ -324,7 +324,7 @@ export default function HomeContent() {
             )}
           </div>
           
-          <div className="col-span-3 bg-[#1e1f23] border border-[#3A3B3F] p-4 rounded-2xl flex flex-col">
+          {/* <div className="col-span-3 bg-[#1e1f23] border border-[#3A3B3F] p-4 rounded-2xl flex flex-col">
             <div className="pb-4 bg-neutral-850 flex items-center justify-between">
               <div className="flex gap-x-4">
                 <Button
@@ -417,7 +417,7 @@ export default function HomeContent() {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       )}
     </div>
